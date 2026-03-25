@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0f">
+<title>VJ Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #4f8ef7;
+    --accent2: #7c5cfc;
+    --green: #22c55e;
+    --orange: #f97316;
+    --red: #ef4444;
+    --text: #f0f0f8;
+    --sub: #8888aa;
+    --m1: #22c55e;
+    --m2: #f97316;
+    --m3: #a855f7;
+    --m4: #14b8a6;
+    --nav-h: 64px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; overflow: hidden; }
+  
+  /* LAYOUT */
+  #app { display: flex; flex-direction: column; height: 100dvh; }
+  #header { padding: 14px 16px 10px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  #header h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+  #header h1 span { color: var(--accent); }
+  #screens { flex: 1; overflow: hidden; position: relative; }
+  .screen { position: absolute; inset: 0; overflow-y: auto; padding: 16px 16px calc(var(--nav-h) + 16px); display: none; }
+  .screen.active { display: block; }
+  
+  /* NAV */
+  #nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--surface); border-top: 1px solid var(--border); display: flex; z-index: 100; }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--sub); transition: color 0.15s; border: none; background: none; }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn svg { width: 22px; height: 22px; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .sub { color: var(--sub); font-size: 13px; }
+
+  /* MONTH COLORS */
+  .m1 { color: var(--m1); } .m1-bg { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); }
+  .m2 { color: var(--m2); } .m2-bg { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.3); }
+  .m3 { color: var(--m3); } .m3-bg { background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.3); }
+  .m4 { color: var(--m4); } .m4-bg { background: rgba(20,184,166,0.12); border-color: rgba(20,184,166,0.3); }
+
+  /* PROGRAM SCREEN */
+  .month-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; margin-top: 20px; }
+  .month-header:first-child { margin-top: 0; }
+  .month-label { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+  .month-phase { font-size: 12px; color: var(--sub); font-weight: 500; }
+  .session-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+  .session-header { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+  .session-day { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .session-body { display: none; border-top: 1px solid var(--border); }
+  .session-body.open { display: block; }
+  .ex-row { padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .ex-row:last-child { border-bottom: none; }
+  .ex-row:active { background: rgba(255,255,255,0.03); }
+  .ex-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .ex-meta { font-size: 12px; color: var(--sub); display: flex; gap: 10px; flex-wrap: wrap; }
+  .ex-note { font-size: 12px; color: var(--sub); margin-top: 6px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 6px; display: none; line-height: 1.5; }
+  .ex-note.show { display: block; }
+  .chevron { transition: transform 0.2s; color: var(--sub); }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* SESSION SCREEN */
+  #session-picker { }
+  #session-picker h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .session-pick-btn { width: 100%; padding: 14px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; color: var(--text); text-align: left; cursor: pointer; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.15s; }
+  .session-pick-btn:active { border-color: var(--accent); }
+  .session-pick-name { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; text-transform: uppercase; }
+  .session-pick-count { font-size: 12px; color: var(--sub); }
+
+  #session-active { display: none; }
+  #session-active.show { display: block; }
+  #session-picker.hide { display: none; }
+
+  .progress-bar-wrap { background: var(--border); border-radius: 4px; height: 4px; margin-bottom: 16px; }
+  .progress-bar-fill { height: 4px; border-radius: 4px; background: var(--accent); transition: width 0.3s; }
+
+  .ex-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .ex-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .ex-card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
+  .ex-card-sets { font-size: 13px; color: var(--sub); margin-bottom: 4px; }
+  .ex-card-note { font-size: 12px; color: var(--sub); background: rgba(255,255,255,0.04); border-radius: 8px; padding: 8px 10px; margin-bottom: 14px; line-height: 1.5; }
+
+  .sets-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .set-row { display: flex; align-items: center; gap: 8px; }
+  .set-num { width: 28px; font-size: 13px; font-weight: 600; color: var(--sub); flex-shrink: 0; }
+  .set-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 15px; font-family: 'Barlow', sans-serif; padding: 8px 10px; outline: none; transition: border-color 0.15s; }
+  .set-input:focus { border-color: var(--accent); }
+  .set-input::placeholder { color: var(--sub); }
+  .set-done-btn { width: 36px; height: 36px; border-radius: 8px; background: var(--border); border: none; color: var(--sub); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; flex-shrink: 0; }
+  .set-done-btn.done { background: var(--green); color: white; }
+
+  /* REST TIMER */
+  #rest-timer { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; display: none; }
+  #rest-timer.show { display: flex; }
+  #rest-timer .label { font-size: 14px; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; }
+  #rest-timer .time { font-family: 'Barlow Condensed', sans-serif; font-size: 96px; font-weight: 800; color: var(--accent); line-height: 1; }
+  #rest-timer .ex-name-rt { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; text-transform: uppercase; color: var(--text); }
+  #rest-timer .skip-btn { padding: 12px 32px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'Barlow', sans-serif; }
+  #rest-timer .skip-btn:active { background: var(--border); }
+  .timer-ring { position: relative; }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+  .timer-ring-fill { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+
+  /* SESSION NAV BUTTONS */
+  .session-nav { display: flex; gap: 10px; margin-top: 8px; }
+  .btn { padding: 13px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; font-family: 'Barlow', sans-serif; flex: 1; transition: opacity 0.15s; }
+  .btn:active { opacity: 0.8; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+  .btn-success { background: var(--green); color: white; }
+  .btn-danger { background: transparent; border: 1px solid var(--border); color: var(--sub); font-size: 13px; padding: 10px; }
+
+  /* COMPLETE SCREEN */
+  #session-complete { display: none; text-align: center; padding: 40px 20px; }
+  #session-complete.show { display: block; }
+  #session-complete .big { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 800; text-transform: uppercase; }
+  #session-complete .sub2 { color: var(--sub); font-size: 15px; margin: 8px 0 24px; }
+
+  /* PB SCREEN */
+  #pb-screen h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  #pb-screen .sub { margin-bottom: 16px; }
+  .pb-filter { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .pb-filter-btn { padding: 6px 12px; border-radius: 6px; background: var(--card); border: 1px solid var(--border); color: var(--sub); font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Barlow', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.15s; }
+  .pb-filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .pb-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+  .pb-card-header { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .pb-card-name { font-size: 14px; font-weight: 600; }
+  .pb-card-best { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: var(--accent); }
+  .pb-card-best.no-pb { color: var(--sub); font-size: 14px; font-family: 'Barlow', sans-serif; font-weight: 400; }
+  .pb-card-body { display: none; border-top: 1px solid var(--border); padding: 12px 14px; }
+  .pb-card-body.open { display: block; }
+  .pb-log-form { display: flex; gap: 8px; margin-bottom: 12px; }
+  .pb-log-form input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; font-family: 'Barlow', sans-serif; padding: 8px 10px; outline: none; }
+  .pb-log-form input:focus { border-color: var(--accent); }
+  .pb-log-form input::placeholder { color: var(--sub); }
+  .pb-log-btn { padding: 8px 14px; background: var(--accent); border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Barlow', sans-serif; white-space: nowrap; }
+  .pb-history { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
+  .pb-entry { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 6px 8px; border-radius: 6px; background: var(--surface); }
+  .pb-entry.is-pb { background: rgba(79,142,247,0.12); }
+  .pb-entry-weight { font-weight: 600; }
+  .pb-entry-date { color: var(--sub); font-size: 12px; }
+  .pb-entry-delete { color: var(--sub); background: none; border: none; cursor: pointer; font-size: 14px; padding: 2px 4px; }
+  .pb-entry-tag { font-size: 10px; background: var(--accent); color: white; padding: 1px 6px; border-radius: 3px; font-weight: 700; }
+
+  /* SESSION STATUS */
+  .session-status { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .session-status-left { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; color: var(--sub); text-transform: uppercase; letter-spacing: 0.5px; }
+  .session-status-right { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; color: var(--sub); text-transform: uppercase; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* DELOAD BADGE */
+  .deload-badge { background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; font-size: 12px; color: var(--orange); font-weight: 500; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 32px 16px; color: var(--sub); font-size: 14px; }
+
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 6px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <h1>VJ <span>Tracker</span></h1>
+  </div>
+  <div id="screens">
+    <!-- PROGRAM -->
+    <div id="screen-program" class="screen active"></div>
+    <!-- SESSION -->
+    <div id="screen-session" class="screen">
+      <div id="session-picker">
+        <h2>Start Session</h2>
+      </div>
+      <div id="session-active"></div>
+      <div id="session-complete">
+        <div class="big">🔥 Done!</div>
+        <div class="sub2">Session logged.</div>
+        <button class="btn btn-primary" onclick="endSession()">Back to Sessions</button>
+      </div>
+    </div>
+    <!-- PBS -->
+    <div id="screen-pbs" class="screen">
+      <h2>Personal Bests</h2>
+      <p class="sub" style="margin-bottom:12px">Tap an exercise to log a weight</p>
+      <div class="pb-filter">
+        <button class="pb-filter-btn active" onclick="filterPB('all',this)">All</button>
+        <button class="pb-filter-btn" onclick="filterPB('1',this)" style="color:var(--m1)">M1</button>
+        <button class="pb-filter-btn" onclick="filterPB('2',this)" style="color:var(--m2)">M2</button>
+        <button class="pb-filter-btn" onclick="filterPB('3',this)" style="color:var(--m3)">M3</button>
+        <button class="pb-filter-btn" onclick="filterPB('4',this)" style="color:var(--m4)">M4</button>
+      </div>
+      <div id="pb-list"></div>
+    </div>
+  </div>
+  <nav id="nav">
+    <button class="nav-btn active" onclick="showScreen('program',this)" id="nav-program">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Program
+    </button>
+    <button class="nav-btn" onclick="showScreen('session',this)" id="nav-session">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Session
+    </button>
+    <button class="nav-btn" onclick="showScreen('pbs',this)" id="nav-pbs">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      PBs
+    </button>
+  </nav>
+</div>
+
+<!-- REST TIMER OVERLAY -->
+<div id="rest-timer">
+  <div class="label">Rest</div>
+  <div class="timer-ring">
+    <svg width="160" height="160" viewBox="0 0 160 160">
+      <circle class="timer-ring-bg" cx="80" cy="80" r="72"/>
+      <circle class="timer-ring-fill" id="timer-ring-fill" cx="80" cy="80" r="72"/>
+    </svg>
+    <div id="timer-display" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:800;color:var(--accent)">0:00</div>
+  </div>
+  <div class="ex-name-rt" id="timer-ex-name"></div>
+  <button class="skip-btn" onclick="skipRest()">Skip Rest</button>
+</div>
+
+<script>
+// ─── PROGRAM DATA ─────────────────────────────────────────────────────────────
+const PROGRAM = [
+  {
+    month: 1, label: "Hypertrophy & Tissue Prep", color: "m1",
+    deload: "Week 4: Drop to 3 sets on all exercises, reduce load by 20%, same reps.",
+    sessions: [
+      {
+        day: "Wednesday", label: "Primary Leg Session",
+        exercises: [
+          { id:"m1w1", name:"Vertical Jump Practice", sets:"5×3 jumps", rest:90, note:"FIRST — fully fresh CNS. Groove the pattern at full effort. PAP effect improves subsequent squat performance." },
+          { id:"m1w2", name:"Back Squat (Full ROM)", sets:"4×10–12", rest:90, note:"Brace hard. Full depth. Do not chase weight — own the reps." },
+          { id:"m1w3", name:"Romanian Deadlift", sets:"4×10–12", rest:90, note:"Hip hinge, not back bend. Feel the hamstring stretch." },
+          { id:"m1w4", name:"Bulgarian Split Squat", sets:"3×10–12 / leg", rest:90, note:"Front foot handles the load. Rear foot is just balance." },
+          { id:"m1w5", name:"Hip Thrust", sets:"3×12–15", rest:60, note:"Full hip extension at top. Squeeze glutes hard." },
+          { id:"m1w6", name:"Standing Calf Raise (slow)", sets:"4×15–20", rest:60, note:"3s up, pause at top, 3s down. Gastrocnemius development." },
+          { id:"m1w7", name:"Terminal Knee Extension (band)", sets:"3×15–20", rest:45, note:"Replaces leg extension. Directly activates VMO, protects patellar tendon." },
+          { id:"m1w8", name:"Tibialis Raises", sets:"3×20", rest:45, note:"Heels on a step or plate edge. Slow and deliberate. Shin splint prevention." },
+        ]
+      },
+      {
+        day: "Sunday", label: "Secondary / Bulletproofing",
+        exercises: [
+          { id:"m1s1", name:"Reverse Lunge", sets:"3×12 / leg", rest:60, note:"Controlled descent. Hip flexor loaded at bottom — important for jump mechanics." },
+          { id:"m1s2", name:"Single-Leg RDL", sets:"3×10 / leg", rest:60, note:"Hip hinge primary. Keep hips level." },
+          { id:"m1s3", name:"Spanish Squat Isometric (band)", sets:"3×30s", rest:60, note:"Knees track over toes. Builds patellar tendon tolerance. Do not skip." },
+          { id:"m1s4", name:"Seated Calf Raise (slow)", sets:"4×15–20", rest:60, note:"Soleus development. Critical for ankle stiffness in reactive phases." },
+          { id:"m1s5", name:"Foot Intrinsic Work", sets:"5 min", rest:0, note:"Toe curls, toe spread, short foot. Direct injury prevention." },
+        ]
+      }
+    ]
+  },
+  {
+    month: 2, label: "Max Strength", color: "m2",
+    deload: "Week 8: Remove 1 set from squats and RDL (4→3), reduce all loads by 20%. Keep jump practice.",
+    sessions: [
+      {
+        day: "Wednesday", label: "Primary Strength Session",
+        exercises: [
+          { id:"m2w1", name:"Vertical Jump Practice", sets:"5×3 jumps", rest:90, note:"FIRST — fresh CNS. PAP from jumps carries into heavy squats." },
+          { id:"m2w2", name:"Back Squat", sets:"4×3–5", rest:180, note:"Alternate full/half squat weekly. Full = depth. Half = 90° — accelerates out of the hole." },
+          { id:"m2w3", name:"Heavy RDL", sets:"4×5–6", rest:150, note:"Load the hamstrings maximally. If 6 reps feels easy, add weight next session." },
+          { id:"m2w4", name:"Hip Thrust (heavy)", sets:"3×4–6", rest:120, note:"Heavy load. Glute max development carries directly to push-off." },
+          { id:"m2w5", name:"Weighted Split Squat", sets:"3×6 / leg", rest:120, note:"Add load vs Month 1. Unilateral strength transfers to jump mechanics." },
+          { id:"m2w6", name:"Standing Calf Raise (heavy)", sets:"4×6–8", rest:90, note:"Increase load significantly from Month 1. Builds elastic capacity." },
+          { id:"m2w7", name:"Tibialis Raises", sets:"3×15", rest:45, note:"Maintenance volume. Keep for joint health." },
+        ]
+      },
+      {
+        day: "Sunday", label: "Secondary Strength / Isometrics",
+        exercises: [
+          { id:"m2s1", name:"Trap Bar Deadlift", sets:"3×3–5", rest:180, note:"Hip-dominant. Excellent vert carryover." },
+          { id:"m2s2", name:"Leg Extension Isometric Hold", sets:"3×30s", rest:60, note:"Hold at 60° knee angle. Patellar tendon tolerance under sustained load." },
+          { id:"m2s3", name:"Single-Leg Press or Split Squat", sets:"3×6–8", rest:120, note:"Reveals strength imbalances. Keep load honest." },
+          { id:"m2s4", name:"Hamstring Isometric Bridge", sets:"3×30s", rest:60, note:"Feet on box. Hamstring strength at long length — important for landing safety." },
+        ]
+      }
+    ]
+  },
+  {
+    month: 3, label: "Power Development", color: "m3",
+    deload: "Week 12: Drop volume 50%. Remove power cleans and jumps. Do 3×3 speed squats at 40% only.",
+    sessions: [
+      {
+        day: "Wednesday", label: "Primary Power Session",
+        exercises: [
+          { id:"m3w1", name:"Power Cleans (or Hang High Pulls)", sets:"3×3", rest:180, note:"⚠ Only if technique is clean. Replace with Hang High Pulls if not. Triple extension — hip, knee, ankle." },
+          { id:"m3w2", name:"Speed Squats (50–60% 1RM)", sets:"3×3", rest:150, note:"Bar speed is the metric. EXPLOSIVE concentric. Paired with Trap Bar Jumps — do immediately after." },
+          { id:"m3w3", name:"Trap Bar Jumps (contrast pair)", sets:"3×4", rest:180, note:"Do immediately after Speed Squats. 20–30% BW. Max height every rep. Land softly." },
+          { id:"m3w4", name:"Explosive Hip Thrust", sets:"3×3", rest:150, note:"Drive hips up as fast as possible. This is not a hypertrophy exercise anymore." },
+          { id:"m3w5", name:"Fast Calf Raises", sets:"4×10", rest:60, note:"Bodyweight or light load. Max ankle plantarflexion speed. Introduces SSC at the ankle." },
+          { id:"m3w6", name:"Max Effort Vertical Jump", sets:"3×3", rest:90, note:"Reduced to 3 sets — contrast pairs already deliver the neural stimulus. Track vs baseline." },
+        ]
+      },
+      {
+        day: "Sunday", label: "Plyometric Power Session",
+        exercises: [
+          { id:"m3s1", name:"Med Ball Overhead Slam / Scoop Toss", sets:"3×5", rest:90, note:"Total body power expression. Carry-over to arm swing mechanics in jump." },
+          { id:"m3s2", name:"Lunge Jump to Switch", sets:"3×6 / leg", rest:90, note:"Explosive. Soft landing. Develops single-leg power and hip extension under speed." },
+          { id:"m3s3", name:"Trap Bar or Goblet Jump (light)", sets:"3×5", rest:150, note:"30% BW max. Quality over everything. If landing is heavy, reduce load." },
+          { id:"m3s4", name:"Landmine Hops", sets:"3×5 / leg", rest:90, note:"Single-leg explosive hip extension. Transfers to running jump takeoff." },
+        ]
+      }
+    ]
+  },
+  {
+    month: 4, label: "Elastic & Reactive", color: "m4",
+    deload: "Week 16: Remove all depth jumps and bounds. Pogo jumps 2×15 only. Speed squats 2×3 at 50%. Then test your vertical.",
+    sessions: [
+      {
+        day: "Wednesday", label: "Reactive & Strength Maintenance",
+        exercises: [
+          { id:"m4w1", name:"Speed Squats — Strength Maintenance", sets:"3×3 at 60%", rest:180, note:"Do NOT remove. You will lose force production without it. Preserves the base while reactive work peaks." },
+          { id:"m4w2", name:"Pogo Jumps (stiff ankle)", sets:"3×20", rest:120, note:"Ground contact under 200ms. Minimal knee bend. If knees bend significantly you are just jumping — not being reactive." },
+          { id:"m4w3", name:"Ankle Hops", sets:"3×15", rest:90, note:"Plantarflexion only. Forefoot contact. Trains the distal SSC most people ignore." },
+          { id:"m4w4", name:"Fast Calf Raises", sets:"4×20", rest:60, note:"Bodyweight only. Maximum speed. Ankle stiffness development." },
+        ]
+      },
+      {
+        day: "Sunday", label: "Max Reactive / Depth Jump Session",
+        exercises: [
+          { id:"m4s1", name:"Depth Jumps", sets:"4×3", rest:180, note:"Step off (don't jump off) box. Land on forefoot. MINIMIZE ground contact. Explode immediately. Box: 30cm Wk1 → 38cm Wk2 → 45cm Wk3." },
+          { id:"m4s2", name:"Bounds (horizontal)", sets:"3×20–30m", rest:150, note:"Alternating legs. Max push-off each stride. Not a jog — full displacement per contact." },
+          { id:"m4s3", name:"Single-Leg Hops (reactive)", sets:"3×5 / leg", rest:120, note:"Continuous. Minimal ground contact. Develops unilateral SSC — transfers to running jump takeoff." },
+          { id:"m4s4", name:"Sprint Accelerations", sets:"5×20m", rest:120, note:"First 3 steps explosive. CNS activation. Not conditioning — not all-out sprints." },
+        ]
+      }
+    ]
+  }
+];
+
+// All unique exercises for PB tracking
+const ALL_EXERCISES = [];
+PROGRAM.forEach(m => m.sessions.forEach(s => s.exercises.forEach(e => {
+  if (!ALL_EXERCISES.find(x => x.id === e.id)) ALL_EXERCISES.push({ id: e.id, name: e.name, month: m.month });
+})));
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let activeSession = null; // { month, sessionIdx, exIdx, setData }
+let timerInterval = null;
+let timerRemaining = 0;
+let timerTotal = 0;
+let currentPBFilter = 'all';
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+function getPBs() { try { return JSON.parse(localStorage.getItem('vj_pbs') || '{}'); } catch { return {}; } }
+function savePBs(d) { localStorage.setItem('vj_pbs', JSON.stringify(d)); }
+function getBestPB(exId) {
+  const pbs = getPBs();
+  if (!pbs[exId] || !pbs[exId].length) return null;
+  return Math.max(...pbs[exId].map(e => parseFloat(e.w) || 0));
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  (btn || document.getElementById('nav-' + name)).classList.add('active');
+  if (name === 'pbs') renderPBs();
+}
+
+// ─── PROGRAM SCREEN ───────────────────────────────────────────────────────────
+function renderProgram() {
+  const el = document.getElementById('screen-program');
+  const colors = { 1:'#22c55e', 2:'#f97316', 3:'#a855f7', 4:'#14b8a6' };
+  el.innerHTML = PROGRAM.map(m => `
+    <div class="month-header">
+      <div>
+        <div class="month-label" style="color:var(--${m.color})">${m.month === 1 ? 'Month 1' : m.month === 2 ? 'Month 2' : m.month === 3 ? 'Month 3' : 'Month 4'}</div>
+        <div class="month-phase">${m.label}</div>
+      </div>
+    </div>
+    <div class="deload-badge">⚠ Deload: ${m.deload}</div>
+    ${m.sessions.map((s, si) => `
+      <div class="session-card">
+        <div class="session-header" onclick="toggleSession(this)">
+          <div>
+            <div class="session-day" style="color:var(--${m.color})">${s.day}</div>
+            <div class="sub" style="font-size:12px">${s.label} · ${s.exercises.length} exercises</div>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="session-body">
+          ${s.exercises.map(e => `
+            <div class="ex-row" onclick="toggleNote(this)">
+              <div class="ex-name">${e.name}</div>
+              <div class="ex-meta">
+                <span>📊 ${e.sets}</span>
+                ${e.rest > 0 ? `<span>⏱ ${e.rest >= 60 ? Math.floor(e.rest/60) + ':' + String(e.rest%60).padStart(2,'0') : e.rest + 's'} rest</span>` : ''}
+              </div>
+              <div class="ex-note">${e.note}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('')}
+  `).join('');
+}
+
+function toggleSession(btn) {
+  const body = btn.nextElementSibling;
+  const chev = btn.querySelector('.chevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function toggleNote(row) {
+  row.querySelector('.ex-note').classList.toggle('show');
+}
+
+// ─── SESSION SCREEN ───────────────────────────────────────────────────────────
+function renderSessionPicker() {
+  const el = document.getElementById('session-picker');
+  const colors = ['m1','m2','m3','m4'];
+  el.innerHTML = '<h2>Start Session</h2>' + PROGRAM.map(m => m.sessions.map((s, si) => `
+    <button class="session-pick-btn" onclick="startSession(${m.month-1},${si})">
+      <div>
+        <div class="session-pick-name" style="color:var(--${m.color})">Month ${m.month} — ${s.day}</div>
+        <div class="session-pick-count">${s.label} · ${s.exercises.length} exercises</div>
+      </div>
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </button>
+  `).join('')).join('');
+}
+
+function startSession(mIdx, sIdx) {
+  const session = PROGRAM[mIdx].sessions[sIdx];
+  activeSession = {
+    mIdx, sIdx,
+    exIdx: 0,
+    setData: session.exercises.map(e => ({ weight: '', reps: '', doneSets: [] }))
+  };
+  document.getElementById('session-picker').classList.add('hide');
+  document.getElementById('session-complete').classList.remove('show');
+  document.getElementById('session-active').style.display = 'block';
+  renderActiveEx();
+}
+
+function renderActiveEx() {
+  if (!activeSession) return;
+  const m = PROGRAM[activeSession.mIdx];
+  const s = m.sessions[activeSession.sIdx];
+  const ex = s.exercises[activeSession.exIdx];
+  const total = s.exercises.length;
+  const idx = activeSession.exIdx;
+  const pct = (idx / total) * 100;
+  const pbVal = getBestPB(ex.id);
+
+  // Parse sets count
+  const setsMatch = ex.sets.match(/^(\d+)/);
+  const numSets = setsMatch ? parseInt(setsMatch[1]) : 3;
+  const isTime = ex.sets.includes('s') || ex.sets.includes('min') || ex.id.includes('s3') || ex.id.includes('s4') || ex.id.includes('s5');
+
+  const doneSets = activeSession.setData[idx].doneSets;
+
+  document.getElementById('session-active').innerHTML = `
+    <div class="session-status">
+      <div class="session-status-left">${m.label}</div>
+      <div class="session-status-right">Exercise ${idx+1} / ${total}</div>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    <div class="ex-card">
+      <div class="ex-card-header">
+        <div class="ex-card-name" style="color:var(--${m.color})">${ex.name}</div>
+        ${pbVal ? `<div style="text-align:right;flex-shrink:0;margin-left:8px"><div style="font-size:10px;color:var(--sub);text-transform:uppercase">PB</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--accent)">${pbVal}kg</div></div>` : ''}
+      </div>
+      <div class="ex-card-sets">📊 ${ex.sets} &nbsp;⏱ ${ex.rest > 0 ? (ex.rest >= 60 ? Math.floor(ex.rest/60) + ':' + String(ex.rest%60).padStart(2,'0') : ex.rest + 's') : '—'} rest</div>
+      <div class="ex-card-note">${ex.note}</div>
+      <div class="sets-grid">
+        ${Array.from({length: numSets}, (_, i) => {
+          const done = doneSets[i];
+          return `
+            <div class="set-row" id="set-row-${i}">
+              <div class="set-num">S${i+1}</div>
+              <input class="set-input" id="set-weight-${i}" type="number" inputmode="decimal" placeholder="${isTime ? 'time/notes' : 'weight (kg)'}" value="${done?.weight || ''}" onchange="updateSetData(${i},'weight',this.value)" style="max-width:120px">
+              <input class="set-input" id="set-reps-${i}" type="number" inputmode="numeric" placeholder="${isTime ? '–' : 'reps'}" value="${done?.reps || ''}" onchange="updateSetData(${i},'reps',this.value)">
+              <button class="set-done-btn ${done ? 'done' : ''}" onclick="completeSet(${i},${ex.rest})" id="set-btn-${i}">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              </button>
+            </div>`;
+        }).join('')}
+      </div>
+      <div class="session-nav">
+        ${idx > 0 ? `<button class="btn btn-secondary" onclick="prevEx()">← Back</button>` : ''}
+        ${idx < total-1
+          ? `<button class="btn btn-primary" onclick="nextEx()">Next →</button>`
+          : `<button class="btn btn-success" onclick="finishSession()">Complete Session ✓</button>`}
+      </div>
+      ${idx > 0 ? '' : ''}
+      <button class="btn btn-danger" style="margin-top:8px;width:100%" onclick="endSession()">Quit Session</button>
+    </div>
+  `;
+}
+
+function updateSetData(setIdx, field, val) {
+  if (!activeSession) return;
+  if (!activeSession.setData[activeSession.exIdx]) return;
+  if (!activeSession.setData[activeSession.exIdx].doneSets[setIdx]) {
+    activeSession.setData[activeSession.exIdx].doneSets[setIdx] = {};
+  }
+  activeSession.setData[activeSession.exIdx].doneSets[setIdx][field] = val;
+}
+
+function completeSet(setIdx, restSeconds) {
+  if (!activeSession) return;
+  const ds = activeSession.setData[activeSession.exIdx].doneSets;
+  const weightEl = document.getElementById('set-weight-' + setIdx);
+  const repsEl = document.getElementById('set-reps-' + setIdx);
+  if (!ds[setIdx]) ds[setIdx] = {};
+  ds[setIdx].weight = weightEl ? weightEl.value : '';
+  ds[setIdx].reps = repsEl ? repsEl.value : '';
+  ds[setIdx].done = true;
+  const btn = document.getElementById('set-btn-' + setIdx);
+  if (btn) btn.classList.add('done');
+
+  // Auto-save PB if weight entered
+  const ex = PROGRAM[activeSession.mIdx].sessions[activeSession.sIdx].exercises[activeSession.exIdx];
+  const w = parseFloat(ds[setIdx].weight);
+  if (!isNaN(w) && w > 0) {
+    const pbs = getPBs();
+    if (!pbs[ex.id]) pbs[ex.id] = [];
+    pbs[ex.id].unshift({ w: w, d: new Date().toLocaleDateString('en-AU', {day:'numeric',month:'short'}) });
+    savePBs(pbs);
+  }
+
+  if (restSeconds > 0) startTimer(restSeconds, ex.name);
+}
+
+function nextEx() {
+  if (!activeSession) return;
+  const total = PROGRAM[activeSession.mIdx].sessions[activeSession.sIdx].exercises.length;
+  if (activeSession.exIdx < total - 1) { activeSession.exIdx++; renderActiveEx(); }
+}
+
+function prevEx() {
+  if (!activeSession) return;
+  if (activeSession.exIdx > 0) { activeSession.exIdx--; renderActiveEx(); }
+}
+
+function finishSession() {
+  document.getElementById('session-active').style.display = 'none';
+  document.getElementById('session-complete').classList.add('show');
+  activeSession = null;
+}
+
+function endSession() {
+  activeSession = null;
+  document.getElementById('session-active').style.display = 'none';
+  document.getElementById('session-active').innerHTML = '';
+  document.getElementById('session-complete').classList.remove('show');
+  document.getElementById('session-picker').classList.remove('hide');
+  stopTimer();
+}
+
+// ─── REST TIMER ───────────────────────────────────────────────────────────────
+const CIRCUMFERENCE = 2 * Math.PI * 72; // r=72
+
+function startTimer(seconds, exName) {
+  stopTimer();
+  timerTotal = seconds;
+  timerRemaining = seconds;
+  document.getElementById('timer-ex-name').textContent = exName;
+  document.getElementById('rest-timer').classList.add('show');
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timerRemaining--;
+    updateTimerDisplay();
+    if (timerRemaining <= 0) {
+      stopTimer();
+      // Beep
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 0.15, 0.3].forEach(t => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.frequency.value = 880;
+          g.gain.setValueAtTime(0.3, ctx.currentTime + t);
+          g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + t + 0.12);
+          o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.12);
+        });
+      } catch(e) {}
+      document.getElementById('rest-timer').classList.remove('show');
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timerRemaining / 60);
+  const s = timerRemaining % 60;
+  document.getElementById('timer-display').textContent = m + ':' + String(s).padStart(2,'0');
+  const fill = document.getElementById('timer-ring-fill');
+  const progress = timerRemaining / timerTotal;
+  fill.style.strokeDasharray = CIRCUMFERENCE;
+  fill.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+function skipRest() {
+  stopTimer();
+  document.getElementById('rest-timer').classList.remove('show');
+}
+
+// ─── PB SCREEN ────────────────────────────────────────────────────────────────
+function filterPB(val, btn) {
+  currentPBFilter = val;
+  document.querySelectorAll('.pb-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPBs();
+}
+
+function renderPBs() {
+  const pbs = getPBs();
+  const list = document.getElementById('pb-list');
+  const filtered = currentPBFilter === 'all'
+    ? ALL_EXERCISES
+    : ALL_EXERCISES.filter(e => e.month === parseInt(currentPBFilter));
+
+  if (!filtered.length) { list.innerHTML = '<div class="empty">No exercises found.</div>'; return; }
+
+  list.innerHTML = filtered.map(ex => {
+    const entries = pbs[ex.id] || [];
+    const best = entries.length ? Math.max(...entries.map(e => parseFloat(e.w) || 0)) : null;
+    const mColor = ['m1','m2','m3','m4'][ex.month - 1];
+    return `
+      <div class="pb-card">
+        <div class="pb-card-header" onclick="togglePBCard(this)">
+          <div>
+            <div class="pb-card-name">${ex.name} <span class="badge" style="background:rgba(255,255,255,0.08);color:var(--${mColor})">M${ex.month}</span></div>
+          </div>
+          <div class="${best ? 'pb-card-best' : 'pb-card-best no-pb'}">${best ? best + 'kg' : 'No logs'}</div>
+        </div>
+        <div class="pb-card-body" id="pb-body-${ex.id}">
+          <div class="pb-log-form">
+            <input type="number" inputmode="decimal" placeholder="Weight (kg)" id="pb-input-${ex.id}" step="0.5">
+            <button class="pb-log-btn" onclick="logPB('${ex.id}')">Log</button>
+          </div>
+          <div class="pb-history" id="pb-hist-${ex.id}">
+            ${entries.length === 0 ? '<div class="empty" style="padding:12px 0 4px">No entries yet</div>' :
+              entries.map((e, i) => `
+                <div class="pb-entry ${parseFloat(e.w) === best ? 'is-pb' : ''}">
+                  <div class="pb-entry-weight">${e.w}kg ${parseFloat(e.w) === best ? '<span class="pb-entry-tag">PB</span>' : ''}</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="pb-entry-date">${e.d}</div>
+                    <button class="pb-entry-delete" onclick="deletePBEntry('${ex.id}',${i})">✕</button>
+                  </div>
+                </div>
+              `).join('')}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function togglePBCard(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function logPB(exId) {
+  const input = document.getElementById('pb-input-' + exId);
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val <= 0) { input.style.borderColor = 'var(--red)'; setTimeout(() => input.style.borderColor = '', 1000); return; }
+  const pbs = getPBs();
+  if (!pbs[exId]) pbs[exId] = [];
+  pbs[exId].unshift({ w: val, d: new Date().toLocaleDateString('en-AU', {day:'numeric',month:'short'}) });
+  savePBs(pbs);
+  input.value = '';
+  renderPBs();
+  // Re-open the card
+  const body = document.getElementById('pb-body-' + exId);
+  if (body) body.classList.add('open');
+}
+
+function deletePBEntry(exId, idx) {
+  const pbs = getPBs();
+  if (pbs[exId]) { pbs[exId].splice(idx, 1); savePBs(pbs); }
+  renderPBs();
+  const body = document.getElementById('pb-body-' + exId);
+  if (body) body.classList.add('open');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderProgram();
+renderSessionPicker();
+</script>
+</body>
+</html>
