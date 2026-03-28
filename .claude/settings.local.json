@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"\nAdd-Type -AssemblyName System.Drawing\n\nfunction New-Icon {\n  param\\([int]\\\\$size, [string]\\\\$path\\)\n  \\\\$bmp = New-Object System.Drawing.Bitmap\\(\\\\$size, \\\\$size\\)\n  \\\\$g = [System.Drawing.Graphics]::FromImage\\(\\\\$bmp\\)\n  \\\\$g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias\n  \\\\$g.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit\n  \\\\$g.Clear\\([System.Drawing.Color]::Black\\)\n  \\\\$fontSize = [int]\\(\\\\$size * 0.52\\)\n  \\\\$font = New-Object System.Drawing.Font\\('Arial', \\\\$fontSize, [System.Drawing.FontStyle]::Bold\\)\n  \\\\$brush = New-Object System.Drawing.SolidBrush\\([System.Drawing.Color]::FromArgb\\(255, 34, 197, 94\\)\\)\n  \\\\$sf = New-Object System.Drawing.StringFormat\n  \\\\$sf.Alignment = [System.Drawing.StringAlignment]::Center\n  \\\\$sf.LineAlignment = [System.Drawing.StringAlignment]::Center\n  \\\\$rect = New-Object System.Drawing.RectangleF\\(0, 0, \\\\$size, \\\\$size\\)\n  \\\\$g.DrawString\\('V', \\\\$font, \\\\$brush, \\\\$rect, \\\\$sf\\)\n  \\\\$g.Dispose\\(\\); \\\\$font.Dispose\\(\\); \\\\$brush.Dispose\\(\\); \\\\$sf.Dispose\\(\\)\n  \\\\$bmp.Save\\(\\\\$path, [System.Drawing.Imaging.ImageFormat]::Png\\)\n  \\\\$bmp.Dispose\\(\\)\n}\n\nNew-Icon 192 'D:\\\\Business\\\\Vert\\\\Vert training\\\\icon-192.png'\nNew-Icon 512 'D:\\\\Business\\\\Vert\\\\Vert training\\\\icon-512.png'\nWrite-Host 'Icons created'\n\")"
+    ]
+  }
+}

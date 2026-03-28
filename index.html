@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>VERT</title>
+<style>
+  /* ═══ VERT — PREMIUM DARK DESIGN SYSTEM ═══ */
+  :root {
+    --bg:      #0A0A0A;
+    --surface: #0F0F0F;
+    --card:    #141414;
+    --border:  rgba(255,255,255,0.08);
+    --divider: rgba(255,255,255,0.06);
+    --text:    #E8E8E8;
+    --sub:     #888888;
+    --accent:  #C0C0C0;
+    --green:   #2ECC71;
+    --orange:  #c4621a;
+    --red:     #E74C3C;
+    --m1: #22c55e; --m2: #f97316; --m3: #a855f7; --m4: #14b8a6;
+    --nav-h: 64px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; overflow: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+  /* LAYOUT */
+  #app { display: flex; flex-direction: column; height: 100dvh; }
+  #header { padding: 16px 20px 12px; background: var(--bg); border-bottom: 1px solid var(--divider); flex-shrink: 0; }
+  #header h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; background: linear-gradient(180deg, #D4D4D4, #8A8A8A); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: inline-block; }
+  #screens { flex: 1; overflow: hidden; position: relative; }
+  .screen { position: absolute; inset: 0; overflow-y: auto; padding: 20px 16px calc(var(--nav-h) + 20px); display: none; }
+  .screen.active { display: block; }
+
+  /* NAV */
+  #nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--surface); border-top: 1px solid var(--divider); display: flex; z-index: 100; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; font-size: 9px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #555; transition: color 0.2s ease; border: none; background: none; }
+  .nav-btn.active { color: #C0C0C0; }
+  .nav-btn svg { width: 22px; height: 22px; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sub); margin-bottom: 10px; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .sub { color: var(--sub); font-size: 14px; }
+
+  /* MONTH COLORS */
+  .m1 { color: var(--m1); } .m1-bg { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.2); }
+  .m2 { color: var(--m2); } .m2-bg { background: rgba(249,115,22,0.08); border-color: rgba(249,115,22,0.2); }
+  .m3 { color: var(--m3); } .m3-bg { background: rgba(168,85,247,0.08); border-color: rgba(168,85,247,0.2); }
+  .m4 { color: var(--m4); } .m4-bg { background: rgba(20,184,166,0.08); border-color: rgba(20,184,166,0.2); }
+
+  /* PROGRAM SCREEN */
+  .month-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; margin-top: 24px; }
+  .month-header:first-child { margin-top: 0; }
+  .month-label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+  .month-phase { font-size: 12px; color: var(--sub); font-weight: 400; margin-top: 2px; }
+  .session-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+  .session-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: background 0.2s ease; }
+  .session-header:active { background: rgba(255,255,255,0.02); }
+  .session-day { font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
+  .session-body { display: none; border-top: 1px solid var(--divider); }
+  .session-body.open { display: block; }
+  .ex-row { padding: 12px 16px; border-bottom: 1px solid var(--divider); cursor: pointer; transition: background 0.2s ease; }
+  .ex-row:last-child { border-bottom: none; }
+  .ex-row:active { background: rgba(255,255,255,0.02); }
+  .ex-name { font-size: 14px; font-weight: 400; color: var(--text); margin-bottom: 3px; }
+  .ex-meta { font-size: 12px; color: var(--sub); display: flex; gap: 10px; flex-wrap: wrap; }
+  .ex-note { font-size: 13px; color: var(--sub); margin-top: 8px; padding: 10px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; display: none; line-height: 1.6; border-left: 2px solid rgba(255,255,255,0.1); }
+  .ex-note.show { display: block; }
+  .chevron { transition: transform 0.2s ease; color: #444; }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* SESSION SCREEN */
+  #session-picker h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sub); margin-bottom: 16px; }
+  .session-pick-btn { width: 100%; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; color: var(--text); text-align: left; cursor: pointer; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s ease, border-color 0.2s ease; }
+  .session-pick-btn:active { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); }
+  .session-pick-name { font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+  .session-pick-count { font-size: 12px; color: var(--sub); margin-top: 3px; }
+
+  #session-active { display: none; }
+  #session-active.show { display: block; }
+  #session-picker.hide { display: none; }
+
+  .progress-bar-wrap { background: rgba(255,255,255,0.06); border-radius: 2px; height: 2px; margin-bottom: 20px; }
+  .progress-bar-fill { height: 2px; border-radius: 2px; background: linear-gradient(90deg, #8A8A8A, #D4D4D4); transition: width 0.4s ease; }
+
+  .ex-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .ex-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .ex-card-name { font-size: 17px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; flex: 1; line-height: 1.2; }
+  .ex-card-sets { font-size: 12px; color: var(--sub); margin-bottom: 6px; }
+  .ex-card-note { font-size: 12px; color: var(--sub); background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px 12px; margin-bottom: 16px; line-height: 1.6; border-left: 2px solid rgba(255,255,255,0.08); }
+
+  .sets-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .set-row { display: flex; align-items: center; gap: 8px; }
+  .set-num { width: 28px; font-size: 11px; font-weight: 500; color: #555; flex-shrink: 0; letter-spacing: 0.05em; }
+  .set-input { flex: 1; min-height: 44px; background: #111111; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: var(--text); font-size: 15px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-feature-settings: 'tnum'; font-weight: 500; padding: 9px 12px; outline: none; transition: border-color 0.2s ease; -webkit-appearance: none; appearance: none; }
+  .set-input:focus { border-color: rgba(255,255,255,0.22); }
+  .set-input::placeholder { color: #444; }
+  .set-done-btn { width: 44px; height: 44px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease; flex-shrink: 0; }
+  .set-done-btn.done { background: rgba(46,204,113,0.15); border-color: rgba(46,204,113,0.35); color: #2ECC71; }
+
+  /* REST TIMER */
+  #rest-timer { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; display: none; }
+  #rest-timer.show { display: flex; }
+  #rest-timer .label { font-size: 11px; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: 0.15em; }
+  #rest-timer .time { font-size: 64px; font-weight: 200; line-height: 1; font-feature-settings: 'tnum'; background: linear-gradient(180deg, #D4D4D4, #8A8A8A); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  #rest-timer .ex-name-rt { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sub); }
+  #rest-timer .skip-btn { padding: 10px 28px; background: transparent; border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; color: var(--sub); font-size: 12px; font-weight: 500; letter-spacing: 0.05em; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; transition: border-color 0.2s ease, color 0.2s ease; }
+  #rest-timer .skip-btn:active { border-color: rgba(255,255,255,0.3); color: var(--text); }
+  .timer-ring { position: relative; }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 4; }
+  .timer-ring-fill { fill: none; stroke: #BEBEBE; stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  #timer-display { position: absolute !important; inset: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 52px !important; font-weight: 200 !important; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif !important; font-feature-settings: 'tnum'; line-height: 1; background: linear-gradient(180deg, #D4D4D4, #8A8A8A); -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text; }
+
+  /* PREVIOUS SESSION SUMMARY */
+  .prev-summary { background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+  .prev-summary-header { display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; cursor: pointer; user-select: none; }
+  .prev-summary-title { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #4a4a4a; }
+  .prev-summary-arrow { font-size: 10px; color: #4a4a4a; transition: transform 0.2s ease; display: inline-block; }
+  .prev-summary-arrow.open { transform: rotate(90deg); }
+  .prev-summary-body { display: none; padding: 0 14px 12px; border-top: 1px solid rgba(255,255,255,0.04); }
+  .prev-summary-body.open { display: block; }
+  .prev-ex { margin-top: 10px; }
+  .prev-ex-name { font-size: 10px; font-weight: 600; color: #505050; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+  .prev-set-line { font-size: 12px; color: #424242; line-height: 1.7; font-feature-settings: 'tnum'; }
+  .prev-empty { font-size: 12px; color: #3a3a3a; font-style: italic; padding-top: 10px; }
+
+  /* BW EXERCISE — CIRCLE SETS */
+  .bw-sets-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+  .bw-set-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; -webkit-tap-highlight-color: transparent; }
+  .bw-set-lbl { font-size: 10px; font-weight: 600; color: #555; letter-spacing: 0.08em; text-transform: uppercase; }
+  .bw-set-circle { width: 48px; height: 48px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; color: transparent; }
+  .bw-set-btn.done .bw-set-circle { background: rgba(46,204,113,0.15); border-color: rgba(46,204,113,0.5); color: #2ECC71; }
+  /* FEEL RATING */
+  .feel-row { margin-bottom: 16px; }
+  .feel-row-label { font-size: 10px; font-weight: 600; color: #444; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .feel-options { display: flex; gap: 6px; }
+  .feel-btn { flex: 1; padding: 9px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; color: #555; font-size: 11px; font-weight: 500; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; transition: all 0.15s ease; -webkit-appearance: none; appearance: none; }
+  .feel-btn.active.feel-low { background: rgba(234,179,8,0.1); border-color: rgba(234,179,8,0.3); color: #ca8a04; }
+  .feel-btn.active.feel-solid { background: rgba(46,204,113,0.1); border-color: rgba(46,204,113,0.35); color: #2ECC71; }
+  .feel-btn.active.feel-explosive { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.4); color: #f97316; }
+
+  /* SESSION NAV BUTTONS */
+  .session-nav { display: flex; gap: 8px; margin-top: 12px; }
+  .btn { padding: 13px 16px; min-height: 44px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; flex: 1; transition: opacity 0.2s ease; letter-spacing: 0.02em; -webkit-appearance: none; appearance: none; }
+  .btn:active { opacity: 0.75; }
+  .btn-primary { background: linear-gradient(180deg, #D4D4D4, #8A8A8A); color: #0A0A0A; }
+  .btn-secondary { background: transparent; border: 1px solid rgba(255,255,255,0.12); color: var(--text); }
+  .btn-success { background: linear-gradient(180deg, #D4D4D4, #8A8A8A); color: #0A0A0A; }
+  .btn-danger { background: transparent; border: 1px solid rgba(255,255,255,0.06); color: #555; font-size: 12px; padding: 10px; }
+
+  /* COMPLETE SCREEN */
+  #session-complete { display: none; text-align: center; padding: 60px 20px 40px; }
+  #session-complete.show { display: block; }
+  #session-complete .big { font-size: 15px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 12px; }
+  #session-complete .checkmark-circle { width: 56px; height: 56px; border-radius: 50%; border: 1px solid rgba(46,204,113,0.35); display: flex; align-items: center; justify-content: center; color: #2ECC71; }
+  #session-complete .sub2 { color: var(--sub); font-size: 13px; margin: 4px 0 28px; }
+
+  /* PB SCREEN */
+  #pb-screen h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sub); margin-bottom: 4px; }
+  #pb-screen .sub { margin-bottom: 16px; }
+  .pb-filter { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .pb-filter-btn { padding: 6px 16px; border-radius: 20px; background: #1A1A1A; border: 1px solid rgba(255,255,255,0.08); color: var(--sub); font-size: 11px; font-weight: 600; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.07em; transition: all 0.2s ease; -webkit-appearance: none; appearance: none; }
+  .pb-filter-btn.active { background: linear-gradient(180deg, #D4D4D4, #8A8A8A); border-color: transparent; color: #0A0A0A; }
+  .pb-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+  .pb-card-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s ease; }
+  .pb-card-header:active { background: rgba(255,255,255,0.02); }
+  .pb-card-name { font-size: 14px; font-weight: 400; color: var(--text); }
+  .pb-card-best { font-size: 18px; font-weight: 500; font-feature-settings: 'tnum'; color: var(--text); }
+  .pb-card-best.no-pb { color: #444; font-size: 13px; font-weight: 400; }
+  .pb-card-body { display: none; border-top: 1px solid var(--divider); padding: 14px 16px; }
+  .pb-card-body.open { display: block; }
+  .pb-log-form { display: flex; gap: 8px; margin-bottom: 12px; }
+  .pb-log-form input { flex: 1; min-height: 44px; background: #111111; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: var(--text); font-size: 15px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-feature-settings: 'tnum'; padding: 9px 12px; outline: none; -webkit-appearance: none; appearance: none; transition: border-color 0.2s ease; }
+  .pb-log-form input:focus { border-color: rgba(255,255,255,0.2); }
+  .pb-log-form input::placeholder { color: #444; }
+  .pb-log-btn { min-height: 44px; padding: 9px 16px; background: linear-gradient(180deg, #D4D4D4, #8A8A8A); border: none; border-radius: 8px; color: #0A0A0A; font-size: 13px; font-weight: 600; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; white-space: nowrap; -webkit-appearance: none; appearance: none; transition: opacity 0.2s ease; }
+  .pb-log-btn:active { opacity: 0.8; }
+  .pb-history { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
+  .pb-entry { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 7px 10px; border-radius: 6px; background: rgba(255,255,255,0.03); }
+  .pb-entry.is-pb { background: rgba(46,204,113,0.06); border-left: 2px solid rgba(46,204,113,0.3); }
+  .pb-entry-weight { font-weight: 500; font-feature-settings: 'tnum'; }
+  .pb-entry-date { color: var(--sub); font-size: 12px; }
+  .pb-entry-delete { color: #444; background: none; border: none; cursor: pointer; font-size: 13px; padding: 8px 10px; margin: -8px -10px; transition: color 0.2s ease; }
+  .pb-entry-delete:active { color: var(--red); }
+  .pb-entry-tag { font-size: 9px; background: rgba(46,204,113,0.12); color: var(--green); padding: 2px 6px; border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* SESSION STATUS */
+  .session-status { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .session-status-left { font-size: 11px; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: 0.08em; }
+  .session-status-right { font-size: 11px; font-weight: 500; color: var(--sub); font-feature-settings: 'tnum'; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 2px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 1px; }
+
+  /* EXERCISE SWAP */
+  .ex-swap-wrap { margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+  .ex-swap-icon { font-size: 11px; color: #555; flex-shrink: 0; user-select: none; }
+  .ex-swap-select { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; color: #666; font-size: 11px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; padding: 5px 8px; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; min-width: 0; }
+  .ex-swap-select:focus { border-color: rgba(255,255,255,0.18); }
+  .ex-swap-select.has-swap { color: var(--text); border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); }
+
+  /* DELOAD BADGE */
+  .deload-badge { background: rgba(196,98,26,0.08); border: 1px solid rgba(196,98,26,0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 12px; color: var(--orange); font-weight: 400; line-height: 1.5; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 32px 16px; color: #444; font-size: 13px; }
+
+  /* BADGE */
+  .badge { display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.06em; margin-left: 6px; }
+
+  /* HOME SCREEN — CAL AI STYLE */
+  .home-phase-bar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+  .home-phase-name { font-size: 10px; font-weight: 600; color: var(--sub); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .home-phase-sub { font-size: 15px; font-weight: 500; color: var(--text); }
+  .home-ring-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 28px; }
+  .home-ring-wrap { position: relative; width: 180px; height: 180px; }
+  .home-ring-wrap svg { transform: rotate(-90deg); display: block; }
+  .home-ring-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .home-ring-num { font-size: 52px; font-weight: 300; color: var(--text); font-feature-settings: 'tnum'; line-height: 1; letter-spacing: -0.02em; }
+  .home-ring-denom { font-size: 15px; font-weight: 500; color: var(--sub); margin-top: 3px; }
+  .home-ring-label { font-size: 11px; font-weight: 500; color: var(--sub); margin-top: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .home-stat-row { display: flex; gap: 12px; margin-bottom: 16px; }
+  .home-stat-card { flex: 1; background: var(--card); border: 1px solid var(--divider); border-radius: 12px; padding: 16px; }
+  .home-stat-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(255,255,255,0.04); margin-bottom: 12px; color: var(--sub); }
+  .home-stat-num { font-size: 28px; font-weight: 600; color: var(--text); font-feature-settings: 'tnum'; letter-spacing: -0.02em; line-height: 1; margin-bottom: 5px; }
+  .home-stat-lbl { font-size: 11px; font-weight: 500; color: #666; }
+  .home-next-card { background: var(--card); border: 1px solid var(--divider); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .home-card-label { font-size: 10px; font-weight: 600; color: #666; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .home-next-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .home-next-title { font-size: 15px; font-weight: 500; color: var(--text); }
+  .home-next-desc { font-size: 12px; color: var(--sub); margin-top: 4px; }
+  .home-next-exlist { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--divider); display: flex; flex-direction: column; gap: 5px; }
+  .home-next-ex { font-size: 12px; color: #666; }
+  .home-next-btn { padding: 9px 20px; background: linear-gradient(180deg, #D4D4D4, #8A8A8A); border: none; border-radius: 20px; color: #0A0A0A; font-size: 13px; font-weight: 600; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; white-space: nowrap; flex-shrink: 0; transition: opacity 0.2s ease; -webkit-appearance: none; appearance: none; }
+  .home-next-btn:active { opacity: 0.75; }
+  .home-log-card { background: var(--card); border: 1px solid var(--divider); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .home-log-pb { font-size: 36px; font-weight: 300; color: var(--text); font-feature-settings: 'tnum'; line-height: 1; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .home-log-pb-sub { font-size: 12px; color: var(--sub); margin-bottom: 14px; }
+  .home-pr-card { background: var(--card); border: 1px solid var(--divider); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+  .home-pr-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--divider); border-left: 2px solid rgba(46,204,113,0.35); }
+  .home-pr-row:last-child { border-bottom: none; }
+  .home-pr-name { font-size: 13px; font-weight: 400; color: var(--text); padding-right: 12px; }
+  .home-pr-weight { font-size: 15px; font-weight: 600; color: var(--text); font-feature-settings: 'tnum'; }
+  .home-pr-date { font-size: 11px; color: #666; margin-top: 2px; }
+  /* personal bests scroll row */
+  .home-pb-scroll { display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; margin-bottom: 16px; scroll-snap-type: x mandatory; }
+  .home-pb-scroll::-webkit-scrollbar { display: none; }
+  .home-pb-card { background: var(--card); border: 1px solid var(--divider); border-radius: 12px; padding: 14px 16px; flex: 0 0 auto; min-width: 128px; scroll-snap-align: start; }
+  .home-pb-ex-name { font-size: 10px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; line-height: 1.3; }
+  .home-pb-num { font-size: 28px; font-weight: 600; color: var(--text); font-feature-settings: 'tnum'; line-height: 1; letter-spacing: -0.02em; }
+  .home-pb-unit { font-size: 13px; font-weight: 400; color: var(--sub); margin-left: 1px; }
+  .home-pb-date { font-size: 10px; color: #555; margin-top: 6px; }
+  /* training schedule dropdowns */
+  .home-day-label { font-size: 11px; font-weight: 500; color: #666; margin-bottom: 6px; }
+  .home-day-select { width: 100%; background: #111111; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: var(--text); font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; padding: 10px 12px; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; transition: border-color 0.2s ease; }
+  .home-day-select:focus { border-color: rgba(255,255,255,0.2); }
+  /* keep for jump log input used in renderHome */
+  .log-jump-row { display: flex; gap: 8px; margin-top: 0; }
+  .log-jump-input { flex: 1; min-height: 44px; background: #111111; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: var(--text); font-size: 15px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; font-feature-settings: 'tnum'; padding: 10px 14px; outline: none; transition: border-color 0.2s ease; -webkit-appearance: none; appearance: none; }
+  .log-jump-input:focus { border-color: rgba(255,255,255,0.2); }
+  .log-jump-input::placeholder { color: #444; }
+  .log-jump-btn { min-height: 44px; padding: 10px 18px; background: linear-gradient(180deg, #D4D4D4, #8A8A8A); border: none; border-radius: 8px; color: #0A0A0A; font-size: 14px; font-weight: 600; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; white-space: nowrap; -webkit-appearance: none; appearance: none; transition: opacity 0.2s ease; }
+  .log-jump-btn:active { opacity: 0.8; }
+  /* legacy class refs kept for other screens */
+  .home-section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--sub); margin-bottom: 8px; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--divider); }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-val { font-size: 20px; font-weight: 500; font-feature-settings: 'tnum'; color: var(--text); }
+  .next-up-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+
+  /* HISTORY */
+  .hist-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .hist-item:active { opacity: 0.75; }
+  .hist-item-left { display: flex; flex-direction: column; gap: 3px; }
+  .hist-item-date { font-size: 11px; font-weight: 600; color: var(--sub); letter-spacing: 0.06em; text-transform: uppercase; }
+  .hist-item-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .hist-item-meta { font-size: 11px; color: #555; margin-top: 2px; }
+  .hist-item-arrow { color: #444; font-size: 20px; line-height: 1; }
+  .hist-detail-back { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; cursor: pointer; color: var(--sub); font-size: 13px; font-weight: 500; }
+  .hist-detail-back svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .hist-detail-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .hist-detail-date { font-size: 12px; color: var(--sub); margin-bottom: 20px; }
+  .hist-ex-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+  .hist-ex-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .hist-ex-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--divider); font-size: 12px; color: var(--sub); }
+  .hist-ex-row:last-child { border-bottom: none; }
+  .hist-ex-val { color: var(--text); font-weight: 500; font-feature-settings: 'tnum'; }
+  .hist-feel { display: block; font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .hist-action-row { margin-top: 20px; }
+  .hist-action-btn { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--sub); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; letter-spacing: 0.04em; text-transform: uppercase; -webkit-appearance: none; appearance: none; }
+  .hist-action-btn.danger { border-color: rgba(231,76,60,0.3); color: var(--red); }
+  .hist-confirm-box { background: rgba(231,76,60,0.06); border: 1px solid rgba(231,76,60,0.2); border-radius: 10px; padding: 14px; margin-top: 0; }
+  .hist-confirm-box p { font-size: 13px; color: var(--text); margin-bottom: 12px; line-height: 1.5; }
+  .hist-confirm-btns { display: flex; gap: 8px; }
+  .hist-confirm-btns button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; -webkit-appearance: none; appearance: none; }
+  .hist-confirm-yes { background: var(--red); color: #fff; }
+  .hist-confirm-no { background: rgba(255,255,255,0.05); color: var(--sub); }
+  .hist-undo-section { margin-top: 20px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <h1>VERT</h1>
+  </div>
+  <div id="screens">
+    <!-- HOME -->
+    <div id="screen-home" class="screen active"></div>
+    <!-- PROGRAM -->
+    <div id="screen-program" class="screen"></div>
+    <!-- SESSION -->
+    <div id="screen-session" class="screen">
+      <div id="session-picker">
+        <h2>Start Session</h2>
+      </div>
+      <div id="session-active"></div>
+      <div id="session-complete">
+        <div class="big">
+          <div class="checkmark-circle">
+            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          Session Complete
+        </div>
+        <div class="sub2">Session logged.</div>
+        <button class="btn btn-primary" onclick="endSession()">Back to Sessions</button>
+      </div>
+    </div>
+    <!-- PBS -->
+    <div id="screen-pbs" class="screen">
+      <h2>Personal Bests</h2>
+      <p class="sub" style="margin-bottom:12px">Tap an exercise to log a weight</p>
+      <div class="pb-filter">
+        <button class="pb-filter-btn active" onclick="filterPB('all',this)">All</button>
+        <button class="pb-filter-btn" onclick="filterPB('1',this)" style="color:var(--m1)">M1</button>
+        <button class="pb-filter-btn" onclick="filterPB('2',this)" style="color:var(--m2)">M2</button>
+        <button class="pb-filter-btn" onclick="filterPB('3',this)" style="color:var(--m3)">M3</button>
+        <button class="pb-filter-btn" onclick="filterPB('4',this)" style="color:var(--m4)">M4</button>
+      </div>
+      <div id="pb-list"></div>
+    </div>
+    <!-- HISTORY -->
+    <div id="screen-history" class="screen"></div>
+  </div>
+  <nav id="nav">
+    <button class="nav-btn active" onclick="showScreen('home',this)" id="nav-home">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Home
+    </button>
+    <button class="nav-btn" onclick="showScreen('program',this)" id="nav-program">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Program
+    </button>
+    <button class="nav-btn" onclick="showScreen('session',this)" id="nav-session">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Session
+    </button>
+    <button class="nav-btn" onclick="showScreen('pbs',this)" id="nav-pbs">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      PBs
+    </button>
+    <button class="nav-btn" onclick="showScreen('history',this)" id="nav-history">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      History
+    </button>
+  </nav>
+</div>
+
+<!-- REST TIMER OVERLAY -->
+<div id="rest-timer">
+  <div class="label">Rest</div>
+  <div class="timer-ring">
+    <svg width="160" height="160" viewBox="0 0 160 160">
+      <circle class="timer-ring-bg" cx="80" cy="80" r="72"/>
+      <circle class="timer-ring-fill" id="timer-ring-fill" cx="80" cy="80" r="72"/>
+    </svg>
+    <div id="timer-display">0:00</div>
+  </div>
+  <div class="ex-name-rt" id="timer-ex-name"></div>
+  <button class="skip-btn" onclick="skipRest()">Skip Rest</button>
+</div>
+
+<script>
+// ─── PROGRAM DATA ─────────────────────────────────────────────────────────────
+const PROGRAM = [
+  {
+    month: 1, label: "Muscle Growth & Tissue Prep", color: "m1",
+    deload: "Week 4: Lighter recovery week — drop to 3 sets on all exercises, reduce weight by 20%, same reps.",
+    sessions: [
+      {
+        day: "Wednesday", label: "Primary Leg Session",
+        exercises: [
+          { id:"m1w1", name:"Vertical Jump Practice", sets:"5×3 jumps", rest:90, note:"FIRST — do these before anything else, while your nervous system is completely fresh. Jumping first primes your muscles to fire harder on the squats that follow." },
+          { id:"m1w2", name:"Back Squat (Full ROM)", sets:"4×10–12", rest:90, note:"Brace hard. Full depth. Do not chase weight — own the reps." },
+          { id:"m1w3", name:"Romanian Deadlift", sets:"4×10–12", rest:90, note:"Push your hips back — don't round your back. Feel the stretch through the backs of your legs." },
+          { id:"m1w4", name:"Bulgarian Split Squat", sets:"3×10–12 / leg", rest:90, note:"Front foot handles the load. Rear foot is just for balance." },
+          { id:"m1w5", name:"Hip Thrust", sets:"3×12–15", rest:60, note:"Drive your hips all the way up until your body is in a straight line. Squeeze your glutes hard at the top." },
+          { id:"m1w6", name:"Standing Calf Raise (slow)", sets:"4×15–20", rest:60, note:"3 seconds up, pause at the top, 3 seconds down. Builds the large upper calf muscle." },
+          { id:"m1w7", name:"Terminal Knee Extension (band)", sets:"3×15–20", rest:45, note:"Replaces the leg extension machine. Directly targets the inner part of your quad muscle and helps protect the tendon below your kneecap." },
+          { id:"m1w8", name:"Tibialis Raises", sets:"3×20", rest:45, note:"Heels on a step or plate edge. Slow and deliberate. Prevents shin splints." },
+        ]
+      },
+      {
+        day: "Sunday", label: "Secondary / Bulletproofing",
+        exercises: [
+          { id:"m1s1", name:"Reverse Lunge", sets:"3×12 / leg", rest:60, note:"Controlled step back. The hip muscle at the front of your leg gets a full stretch at the bottom — important for jumping power." },
+          { id:"m1s2", name:"Single-Leg RDL", sets:"3×10 / leg", rest:60, note:"Push your hips back as the main movement. Keep your hips level — don't let one side drop." },
+          { id:"m1s3", name:"Spanish Squat Isometric (band)", sets:"3×30s", rest:60, note:"Knees track over toes. Builds tolerance in the tendon below your kneecap. Do not skip." },
+          { id:"m1s4", name:"Seated Calf Raise (slow)", sets:"4×15–20", rest:60, note:"Builds the lower calf muscle. Critical for stiff, springy ankles when you start explosive jumping work." },
+          { id:"m1s5", name:"Foot Intrinsic Work", sets:"5 min", rest:0, note:"Toe curls, toe spread, and foot arch activation. Directly prevents foot and ankle injuries." },
+        ]
+      }
+    ]
+  },
+  {
+    month: 2, label: "Max Strength", color: "m2",
+    deload: "Week 8: Lighter recovery week — remove 1 set from squats and Romanian Deadlifts (4→3), reduce all weights by 20%. Keep jump practice.",
+    sessions: [
+      {
+        day: "Wednesday", label: "Primary Strength Session",
+        exercises: [
+          { id:"m2w1", name:"Vertical Jump Practice", sets:"5×3 jumps", rest:90, note:"FIRST — do these while your nervous system is completely fresh. Jumping first primes your muscles to lift heavier on the squats that follow." },
+          { id:"m2w2", name:"Back Squat", sets:"4×3–5", rest:180, note:"Alternate between full depth and half depth each week. Half depth (90°) trains explosive drive out of the bottom position." },
+          { id:"m2w3", name:"Heavy RDL", sets:"4×5–6", rest:150, note:"Load the hamstrings as much as possible. If 6 reps feels easy, add weight next session." },
+          { id:"m2w4", name:"Hip Thrust (heavy)", sets:"3×4–6", rest:120, note:"Heavy load. Building your biggest glute muscle directly improves your push-off power when jumping." },
+          { id:"m2w5", name:"Weighted Split Squat", sets:"3×6 / leg", rest:120, note:"Add more weight compared to Month 1. Single-leg strength transfers directly to jump mechanics." },
+          { id:"m2w6", name:"Standing Calf Raise (heavy)", sets:"4×6–8", rest:90, note:"Increase the weight significantly from Month 1. Builds springy, elastic tendons." },
+          { id:"m2w7", name:"Tibialis Raises", sets:"3×15", rest:45, note:"Maintenance volume. Keep for joint health." },
+        ]
+      },
+      {
+        day: "Sunday", label: "Secondary Strength / Holds",
+        exercises: [
+          { id:"m2s1", name:"Trap Bar Deadlift", sets:"3×3–5", rest:180, note:"Drive through your hips. Excellent carryover to your vertical jump." },
+          { id:"m2s2", name:"Leg Extension Isometric Hold", sets:"3×30s", rest:60, note:"Hold at a 60° knee bend. Builds tolerance in the tendon below your kneecap under sustained load." },
+          { id:"m2s3", name:"Single-Leg Press or Split Squat", sets:"3×6–8", rest:120, note:"Reveals strength differences between legs. Keep the weight honest." },
+          { id:"m2s4", name:"Hamstring Isometric Bridge", sets:"3×30s", rest:60, note:"Feet elevated on a box. Builds hamstring strength in the fully stretched position — important for landing safely." },
+        ]
+      }
+    ]
+  },
+  {
+    month: 3, label: "Power Development", color: "m3",
+    deload: "Week 12: Cut your total sets and reps by half. Remove power cleans and jumps. Do 3×3 speed squats at 40% of your max only.",
+    sessions: [
+      {
+        day: "Wednesday", label: "Primary Power Session",
+        exercises: [
+          { id:"m3w1", name:"Power Cleans (or Hang High Pulls)", sets:"3×3", rest:180, note:"⚠ Only if your form is solid. Replace with Hang High Pulls if not. The goal is to extend your hips, knees, and ankles all at once in one explosive movement." },
+          { id:"m3w2", name:"Speed Squats (50–60% 1RM)", sets:"3×3", rest:150, note:"Bar speed is the goal — move the bar as fast as possible on the way up. Use 50–60% of your heaviest possible weight. Do Trap Bar Jumps immediately after." },
+          { id:"m3w3", name:"Trap Bar Jumps (contrast pair)", sets:"3×4", rest:180, note:"Do immediately after Speed Squats. Use 20–30% of your bodyweight as the load. Jump for max height every rep. Land softly." },
+          { id:"m3w4", name:"Explosive Hip Thrust", sets:"3×3", rest:150, note:"Drive your hips up as explosively as possible. This is no longer about building muscle — it's about moving fast." },
+          { id:"m3w5", name:"Fast Calf Raises", sets:"4×10", rest:60, note:"Bodyweight or light load. Point your toes down as fast as possible on every rep. This trains the springy snap in your ankles." },
+          { id:"m3w6", name:"Max Effort Vertical Jump", sets:"3×3", rest:90, note:"Reduced to 3 sets — the heavy/explosive pairing earlier in the session already fires up your nervous system. Track your height against your starting baseline." },
+        ]
+      },
+      {
+        day: "Sunday", label: "Plyometric Power Session",
+        exercises: [
+          { id:"m3s1", name:"Med Ball Overhead Slam / Scoop Toss", sets:"3×5", rest:90, note:"Full-body explosive movement. Directly trains the arm swing that adds height to your jump." },
+          { id:"m3s2", name:"Lunge Jump to Switch", sets:"3×6 / leg", rest:90, note:"Explosive and land softly. Builds single-leg power and teaches your hips to drive hard at speed." },
+          { id:"m3s3", name:"Trap Bar or Goblet Jump (light)", sets:"3×5", rest:150, note:"Use 30% of your bodyweight as the load maximum. Quality over everything. If your landings are heavy, reduce the load." },
+          { id:"m3s4", name:"Landmine Hops", sets:"3×5 / leg", rest:90, note:"Single-leg explosive hip drive. Directly transfers to your running jump takeoff." },
+        ]
+      }
+    ]
+  },
+  {
+    month: 4, label: "Elastic & Reactive", color: "m4",
+    deload: "Week 16: Remove all depth jumps and bounds. Pogo jumps 2×15 only. Speed squats 2×3 at 50%. Then test your vertical.",
+    sessions: [
+      {
+        day: "Wednesday", label: "Reactive & Strength Maintenance",
+        exercises: [
+          { id:"m4w1", name:"Speed Squats — Strength Maintenance", sets:"3×3 at 60%", rest:180, note:"Do NOT remove. You will lose your strength base without it. Keeps your power output up while the reactive jumping work peaks." },
+          { id:"m4w2", name:"Pogo Jumps (stiff ankle)", sets:"3×20", rest:120, note:"Ground contact under 200ms. Minimal knee bend. If your knees bend significantly you are just jumping — not being reactive." },
+          { id:"m4w3", name:"Ankle Hops", sets:"3×15", rest:90, note:"Use only your ankle — no knee bend. Land on the ball of your foot. Trains the springy snap in your ankle and foot that most people ignore." },
+          { id:"m4w4", name:"Fast Calf Raises", sets:"4×20", rest:60, note:"Bodyweight only. Maximum speed. Builds ankle stiffness." },
+        ]
+      },
+      {
+        day: "Sunday", label: "Max Reactive / Depth Jump Session",
+        exercises: [
+          { id:"m4s1", name:"Depth Jumps", sets:"4×3", rest:180, note:"Step off (don't jump off) the box. Land on the balls of your feet. MINIMIZE ground contact — explode straight back up. Box height: 30cm Week 1 → 38cm Week 2 → 45cm Week 3." },
+          { id:"m4s2", name:"Bounds (horizontal)", sets:"3×20–30m", rest:150, note:"Alternating legs. Max push-off each stride. Not a jog — cover as much distance as possible with each contact." },
+          { id:"m4s3", name:"Single-Leg Hops (reactive)", sets:"3×5 / leg", rest:120, note:"Continuous. Minimal ground contact. Builds the single-leg spring that transfers directly to your running jump takeoff." },
+          { id:"m4s4", name:"Sprint Accelerations", sets:"5×20m", rest:120, note:"Make the first 3 steps explosive. This fires up your nervous system. Not conditioning — these are not all-out sprints." },
+        ]
+      }
+    ]
+  }
+];
+
+// Bodyweight / non-weighted exercises — excluded from PB tracking
+const NON_PB_IDS = new Set([
+  // Bodyweight / plyometric / no external load — excluded from PB tracking
+  'm1w1','m1w7','m1w8','m1s3','m1s5',          // M1: jumps, band work, foot drills
+  'm2w1','m2w7','m2s2','m2s4',                  // M2: jumps, tibialis raises (BW), isometrics
+  'm3w3','m3w5','m3w6','m3s1','m3s2','m3s3','m3s4', // M3: all plyos, jumps, med ball, hops
+  'm4w2','m4w3','m4w4','m4s1','m4s2','m4s3','m4s4'  // M4: all reactive/sprint work
+]);
+
+// All unique exercises for PB tracking
+const ALL_EXERCISES = [];
+PROGRAM.forEach(m => m.sessions.forEach(s => s.exercises.forEach(e => {
+  if (!ALL_EXERCISES.find(x => x.id === e.id))
+    ALL_EXERCISES.push({ id: e.id, name: e.name, month: m.month, pbTrack: !NON_PB_IDS.has(e.id) });
+})));
+
+// Alternative exercises — keyed by exercise ID
+// null = no dropdown  |  [] = no alternatives  |  [...] = alternatives list
+const EX_ALTS = {
+  // NO DROPDOWN — core movements, no substitution
+  'm1w1': null, 'm2w1': null,
+
+  // Back Squat pattern
+  'm1w2': ['Goblet Squat','Front Squat','Leg Press','Safety Bar Squat','Landmine Squat'],
+  'm2w2': ['Goblet Squat','Front Squat','Leg Press','Safety Bar Squat','Landmine Squat'],
+
+  // Hip hinge / RDL
+  'm1w3': ['Dumbbell RDL','Single Leg RDL','Stiff Leg Deadlift','Cable Pull-Through','Good Morning'],
+  'm2w3': ['Dumbbell RDL','Single Leg RDL','Stiff Leg Deadlift','Cable Pull-Through','Good Morning'],
+
+  // Split squat
+  'm1w4': ['Reverse Lunge','Walking Lunge','Step-Up','Front Foot Elevated Split Squat','Dumbbell Split Squat'],
+  'm2w5': ['Reverse Lunge','Walking Lunge','Step-Up','Front Foot Elevated Split Squat','Dumbbell Split Squat'],
+
+  // Hip thrust
+  'm1w5': ['Glute Bridge (Barbell)','Dumbbell Hip Thrust','Smith Machine Hip Thrust','Cable Pull-Through','Feet-Elevated Glute Bridge'],
+  'm2w4': ['Glute Bridge (Barbell)','Dumbbell Hip Thrust','Smith Machine Hip Thrust','Cable Pull-Through','Feet-Elevated Glute Bridge'],
+  'm3w4': ['Glute Bridge (Barbell)','Dumbbell Hip Thrust','Smith Machine Hip Thrust','Cable Pull-Through','Feet-Elevated Glute Bridge'],
+
+  // Standing calf raise
+  'm1w6': ['Leg Press Calf Raise','Smith Machine Calf Raise','Dumbbell Single Leg Calf Raise','Donkey Calf Raise'],
+  'm2w6': ['Leg Press Calf Raise','Smith Machine Calf Raise','Dumbbell Single Leg Calf Raise','Donkey Calf Raise'],
+
+  // Terminal knee extension
+  'm1w7': ['Leg Extension Machine','Short Arc Quad','Banded TKE with Step'],
+
+  // Tibialis raises
+  'm1w8': ['Toes-on-Wall Tibialis Raise','Banded Tibialis Raise','Seated Tibialis Raise (plate on foot)'],
+  'm2w7': ['Toes-on-Wall Tibialis Raise','Banded Tibialis Raise','Seated Tibialis Raise (plate on foot)'],
+
+  // Seated calf raise
+  'm1s4': ['Single Leg Seated Calf Raise','Dumbbell Seated Calf Raise','Plate-on-Knee Calf Raise'],
+
+  // Trap bar deadlift
+  'm2s1': ['Barbell Deadlift','Sumo Deadlift','Dumbbell Deadlift','Rack Pull'],
+
+  // Pogo jumps
+  'm4w2': ['Ankle Hops','Low Skips','Fast Feet Hops','Jump Rope (double under)'],
+
+  // Depth jumps
+  'm4s1': ['Box Jump','Depth Drop to Stick','Drop Landing to Jump'],
+
+  // Bounds
+  'm4s2': ['Standing Long Jump to Box','Bounding','Horizontal Repeat Jumps'],
+
+  // No alternatives available
+  'm1s1':[],'m1s2':[],'m1s3':[],'m1s5':[],
+  'm2s2':[],'m2s3':[],'m2s4':[],
+  'm3w1':[],'m3w2':[],'m3w3':[],'m3w5':[],'m3w6':[],
+  'm3s1':[],'m3s2':[],'m3s3':[],'m3s4':[],
+  'm4w1':[],'m4w3':[],'m4w4':[],
+  'm4s3':[],'m4s4':[],
+};
+
+// Names that should never appear on the PB page (bodyweight/band/plyo movements)
+const NON_WEIGHTED_NAMES = new Set([
+  'Vertical Jump Practice','Max Effort Vertical Jump',
+  'Depth Jump','Depth Jumps','Box Jump','Broad Jump',
+  'Pogos','Pogo Jumps (stiff ankle)','Snap Downs',
+  'Altitude Landings','Drop Landings','Drop Landing to Jump','Depth Drop to Stick',
+  'Ankle Hops','Low Skips','Fast Feet Hops','Jump Rope','Jump Rope (double under)',
+  'Bounding','Horizontal Repeat Jumps','Standing Long Jump to Box',
+  'Rapid Squat Drops','Countermovement Jump','Squat Jump',
+  'Terminal Knee Extension (band)','Banded TKE with Step','Short Arc Quad',
+  'Tibialis Raises','Toes-on-Wall Tibialis Raise','Banded Tibialis Raise',
+  'Seated Tibialis Raise (plate on foot)',
+]);
+
+// Home screen PB display — groups same-movement IDs across months to show one best per lift
+const HOME_PB_DEFS = [
+  { label: 'Back Squat',   ids: ['m1w2','m2w2'] },
+  { label: 'RDL',          ids: ['m1w3','m2w3'] },
+  { label: 'Hip Thrust',   ids: ['m1w5','m2w4','m3w4'] },
+  { label: 'Split Squat',  ids: ['m1w4','m2w5'] },
+  { label: 'Calf Raise',   ids: ['m1w6','m2w6','m1s4'] },
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let activeSession = null; // { month, sessionIdx, exIdx, setData }
+let timerInterval = null;
+let timerRemaining = 0;
+let timerTotal = 0;
+let currentPBFilter = 'all';
+let prevSummaryExpanded = false;
+let historyView = 'list'; // 'list' | 'detail'
+let historyDetailIdx = -1;
+let undoConfirmPending = false;
+let deleteConfirmIdx = null;
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+function getPBs() { try { return JSON.parse(localStorage.getItem('vj_pbs') || '{}'); } catch { return {}; } }
+function savePBs(d) { localStorage.setItem('vj_pbs', JSON.stringify(d)); }
+function getBestPB(exId) {
+  const pbs = getPBs();
+  if (!pbs[exId] || !pbs[exId].length) return null;
+  return Math.max(...pbs[exId].map(e => parseFloat(e.w) || 0));
+}
+function getJumps() { try { return JSON.parse(localStorage.getItem('vj_jumps') || '[]'); } catch { return []; } }
+function saveJumps(d) { localStorage.setItem('vj_jumps', JSON.stringify(d)); }
+function getSessions() { try { return JSON.parse(localStorage.getItem('vj_sessions') || '[]'); } catch { return []; } }
+function saveSessions(d) { localStorage.setItem('vj_sessions', JSON.stringify(d)); }
+// Returns the localStorage key for a given exercise (primary or active swap)
+function getEffectiveExId(ex) {
+  const swap = getExSwaps()[ex.id];
+  return swap ? ex.id + '::' + swap : ex.id;
+}
+// Produces a valid HTML element ID from any storage key (e.g. "m1w2::Goblet Squat" → "m1w2__Goblet_Squat")
+function pbDomId(key) { return key.replace(/[^a-zA-Z0-9\-]/g, '_'); }
+function getHomePBData(ids) {
+  const pbs = getPBs();
+  const swaps = getExSwaps();
+  let best = null, bestDate = null;
+  ids.forEach(id => {
+    const swap = swaps[id];
+    const key = swap ? id + '::' + swap : id;
+    if (pbs[key]) pbs[key].forEach(entry => {
+      const w = parseFloat(entry.w);
+      if (!isNaN(w) && (best === null || w > best)) { best = w; bestDate = entry.d; }
+    });
+  });
+  return { best, date: bestDate };
+}
+function getTrainingDays() { try { return JSON.parse(localStorage.getItem('vj_days') || '["Wednesday","Sunday"]'); } catch { return ['Wednesday','Sunday']; } }
+function saveTrainingDays(d) { localStorage.setItem('vj_days', JSON.stringify(d)); }
+
+const DAYS_OF_WEEK = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+function changeTrainingDay(idx, val) {
+  const days = getTrainingDays();
+  days[idx] = val;
+  saveTrainingDays(days);
+  renderProgram();
+  renderSessionPicker();
+  renderHome();
+}
+function getExSwaps() { try { return JSON.parse(localStorage.getItem('vj_ex_swaps') || '{}'); } catch { return {}; } }
+function saveExSwaps(d) { localStorage.setItem('vj_ex_swaps', JSON.stringify(d)); }
+function getExName(ex) { const s = getExSwaps(); return s[ex.id] || ex.name; }
+function swapExercise(exId, val) {
+  const swaps = getExSwaps();
+  if (val === '__primary__' || val === '__reset__') delete swaps[exId]; else swaps[exId] = val;
+  saveExSwaps(swaps);
+  renderProgram();
+  if (activeSession) renderActiveEx();
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  (btn || document.getElementById('nav-' + name)).classList.add('active');
+  if (name === 'pbs') renderPBs();
+  if (name === 'home') renderHome();
+  if (name === 'history') { historyView = 'list'; historyDetailIdx = -1; undoConfirmPending = false; deleteConfirmIdx = null; renderHistory(); }
+}
+
+// ─── PROGRAM SCREEN ───────────────────────────────────────────────────────────
+function buildExRow(e) {
+  const alts = EX_ALTS[e.id];
+  const swaps = getExSwaps();
+  const activeName = swaps[e.id] || e.name;
+  const isSwapped = !!swaps[e.id];
+  const rest = e.rest > 0 ? `<span>⏱ ${e.rest >= 60 ? Math.floor(e.rest/60)+':'+String(e.rest%60).padStart(2,'0') : e.rest+'s'} rest</span>` : '';
+  const meta = `<div class="ex-meta"><span>💪 ${e.sets}</span>${rest}</div>`;
+  let swapHtml = '';
+  if (alts !== null) {
+    let opts = `<option value="__primary__"${!isSwapped?' selected':''} style="font-weight:600">${e.name}</option>`;
+    if (alts.length === 0) {
+      opts += `<option disabled style="color:#444;font-style:italic">— No alternatives available</option>`;
+    } else {
+      alts.forEach(a => { opts += `<option value="${a}"${swaps[e.id]===a?' selected':''}>${a}</option>`; });
+      opts += `<option value="__reset__" style="color:#555;font-style:italic">↩ Reset to default</option>`;
+    }
+    swapHtml = `<div class="ex-swap-wrap" onclick="event.stopPropagation()"><span class="ex-swap-icon">⇄</span><select class="ex-swap-select${isSwapped?' has-swap':''}" onchange="swapExercise('${e.id}',this.value)">${opts}</select></div>`;
+  }
+  return `<div class="ex-row" onclick="toggleNote(this)"><div class="ex-name">${activeName}</div>${meta}${swapHtml}<div class="ex-note">${e.note}</div></div>`;
+}
+
+function renderProgram() {
+  const el = document.getElementById('screen-program');
+  const colors = { 1:'#22c55e', 2:'#f97316', 3:'#a855f7', 4:'#14b8a6' };
+  const trainingDays = getTrainingDays();
+  el.innerHTML = PROGRAM.map(m => `
+    <div class="month-header">
+      <div>
+        <div class="month-label" style="color:var(--${m.color})">${m.month === 1 ? 'Month 1' : m.month === 2 ? 'Month 2' : m.month === 3 ? 'Month 3' : 'Month 4'}</div>
+        <div class="month-phase">${m.label}</div>
+      </div>
+    </div>
+    <div class="deload-badge">⚠ Deload: ${m.deload}</div>
+    ${m.sessions.map((s, si) => `
+      <div class="session-card">
+        <div class="session-header" onclick="toggleSession(this)">
+          <div>
+            <div class="session-day" style="color:var(--${m.color})">${trainingDays[si]}</div>
+            <div class="sub" style="font-size:12px">${s.label} · ${s.exercises.length} exercises</div>
+          </div>
+          <svg class="chevron" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="session-body">
+          ${s.exercises.map(e => buildExRow(e)).join('')}
+        </div>
+      </div>
+    `).join('')}
+  `).join('');
+}
+
+function toggleSession(btn) {
+  const body = btn.nextElementSibling;
+  const chev = btn.querySelector('.chevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function toggleNote(row) {
+  row.querySelector('.ex-note').classList.toggle('show');
+}
+
+// ─── SESSION SCREEN ───────────────────────────────────────────────────────────
+function renderSessionPicker() {
+  const el = document.getElementById('session-picker');
+  const colors = ['m1','m2','m3','m4'];
+  const trainingDays = getTrainingDays();
+  el.innerHTML = '<h2>Start Session</h2>' + PROGRAM.map(m => m.sessions.map((s, si) => `
+    <button class="session-pick-btn" onclick="startSession(${m.month-1},${si})">
+      <div>
+        <div class="session-pick-name" style="color:var(--${m.color})">Month ${m.month} — ${trainingDays[si]}</div>
+        <div class="session-pick-count">${s.label} · ${s.exercises.length} exercises</div>
+      </div>
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </button>
+  `).join('')).join('');
+}
+
+function feelLabel(feel) {
+  return { low: '😴 Low Energy', solid: '👍 Solid', explosive: '🔥 Explosive' }[feel] || '';
+}
+
+function toggleBWSet(setIdx, restSeconds) {
+  if (!activeSession) return;
+  const sd = activeSession.setData[activeSession.exIdx];
+  if (!sd.doneSets[setIdx]) sd.doneSets[setIdx] = {};
+  const nowDone = !sd.doneSets[setIdx].done;
+  sd.doneSets[setIdx].done = nowDone;
+  const btn = document.getElementById('bw-set-' + setIdx);
+  if (btn) btn.classList.toggle('done', nowDone);
+  if (nowDone && restSeconds > 0) {
+    const ex = PROGRAM[activeSession.mIdx].sessions[activeSession.sIdx].exercises[activeSession.exIdx];
+    startTimer(restSeconds, getExName(ex));
+  }
+}
+
+function setFeel(feel) {
+  if (!activeSession) return;
+  const sd = activeSession.setData[activeSession.exIdx];
+  sd.feel = sd.feel === feel ? null : feel;
+  document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('active'));
+  if (sd.feel) {
+    const btn = document.getElementById('feel-' + sd.feel);
+    if (btn) btn.classList.add('active');
+  }
+}
+
+function startSession(mIdx, sIdx) {
+  prevSummaryExpanded = false;
+  const session = PROGRAM[mIdx].sessions[sIdx];
+  activeSession = {
+    mIdx, sIdx,
+    exIdx: 0,
+    setData: session.exercises.map(e => ({ weight: '', reps: '', doneSets: [], feel: null }))
+  };
+  document.getElementById('session-picker').classList.add('hide');
+  document.getElementById('session-complete').classList.remove('show');
+  document.getElementById('session-active').style.display = 'block';
+  renderActiveEx();
+}
+
+function renderActiveEx() {
+  if (!activeSession) return;
+  const m = PROGRAM[activeSession.mIdx];
+  const s = m.sessions[activeSession.sIdx];
+  const ex = s.exercises[activeSession.exIdx];
+  const total = s.exercises.length;
+  const idx = activeSession.exIdx;
+  const pct = (idx / total) * 100;
+  const pbVal = getBestPB(getEffectiveExId(ex));
+
+  // Parse sets count
+  const setsMatch = ex.sets.match(/^(\d+)/);
+  const numSets = setsMatch ? parseInt(setsMatch[1]) : 3;
+  const isTime = ex.sets.includes('s') || ex.sets.includes('min') || ex.id.includes('s3') || ex.id.includes('s4') || ex.id.includes('s5');
+  const isBW = NON_WEIGHTED_NAMES.has(ex.name) || NON_WEIGHTED_NAMES.has(getExName(ex));
+
+  const sd = activeSession.setData[idx];
+  const doneSets = sd.doneSets;
+
+  const lastSessionData = getLastSessionData(activeSession.sIdx);
+  const prevBodyHtml = lastSessionData
+    ? lastSessionData.map(prev => `
+        <div class="prev-ex">
+          <div class="prev-ex-name">${prev.name}</div>
+          ${prev.bw
+            ? `<div class="prev-set-line">${prev.completedSets} set${prev.completedSets !== 1 ? 's' : ''} completed${prev.feel ? ' · ' + feelLabel(prev.feel) : ''}</div>`
+            : prev.sets.map(s => {
+                const parts = [];
+                if (s.w) parts.push(s.w + 'kg');
+                if (s.r) parts.push(s.r + ' reps');
+                return `<div class="prev-set-line">Set ${s.n}: ${parts.length ? parts.join(' × ') : '—'}</div>`;
+              }).join('')
+          }
+        </div>`).join('')
+    : '<div class="prev-empty">No previous session data</div>';
+
+  document.getElementById('session-active').innerHTML = `
+    <div class="session-status">
+      <div class="session-status-left">${m.label}</div>
+      <div class="session-status-right">Exercise ${idx+1} / ${total}</div>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    <div class="prev-summary">
+      <div class="prev-summary-header" onclick="togglePrevSummary()">
+        <div class="prev-summary-title">Last Time</div>
+        <div class="prev-summary-arrow${prevSummaryExpanded ? ' open' : ''}">▸</div>
+      </div>
+      <div class="prev-summary-body${prevSummaryExpanded ? ' open' : ''}">${prevBodyHtml}</div>
+    </div>
+    <div class="ex-card">
+      <div class="ex-card-header">
+        <div class="ex-card-name" style="color:var(--${m.color})">${getExName(ex)}</div>
+        ${pbVal ? `<div style="text-align:right;flex-shrink:0;margin-left:8px"><div style="font-size:10px;color:var(--sub);text-transform:uppercase;letter-spacing:0.08em">PB</div><div style="font-size:18px;font-weight:500;color:var(--accent);font-feature-settings:'tnum'">${pbVal}kg</div></div>` : ''}
+      </div>
+      <div class="ex-card-sets">💪 ${ex.sets} &nbsp;⏱ ${ex.rest > 0 ? (ex.rest >= 60 ? Math.floor(ex.rest/60) + ':' + String(ex.rest%60).padStart(2,'0') : ex.rest + 's') : '—'} rest</div>
+      <div class="ex-card-note">${ex.note}</div>
+      ${isBW ? `
+      <div class="bw-sets-row">
+        ${Array.from({length: numSets}, (_, i) => {
+          const done = doneSets[i] && doneSets[i].done;
+          return `<button class="bw-set-btn${done ? ' done' : ''}" id="bw-set-${i}" onclick="toggleBWSet(${i},${ex.rest})">
+            <div class="bw-set-lbl">S${i+1}</div>
+            <div class="bw-set-circle"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+          </button>`;
+        }).join('')}
+      </div>
+      <div class="feel-row">
+        <div class="feel-row-label">Session Feel</div>
+        <div class="feel-options">
+          <button class="feel-btn feel-low${sd.feel === 'low' ? ' active' : ''}" id="feel-low" onclick="setFeel('low')">😴 Low Energy</button>
+          <button class="feel-btn feel-solid${sd.feel === 'solid' ? ' active' : ''}" id="feel-solid" onclick="setFeel('solid')">👍 Solid</button>
+          <button class="feel-btn feel-explosive${sd.feel === 'explosive' ? ' active' : ''}" id="feel-explosive" onclick="setFeel('explosive')">🔥 Explosive</button>
+        </div>
+      </div>` : `
+      <div class="sets-grid">
+        ${Array.from({length: numSets}, (_, i) => {
+          const done = doneSets[i];
+          return `
+            <div class="set-row" id="set-row-${i}">
+              <div class="set-num">S${i+1}</div>
+              <input class="set-input" id="set-weight-${i}" type="number" inputmode="decimal" placeholder="${isTime ? 'time/notes' : 'weight (kg)'}" value="${done?.weight || ''}" onchange="updateSetData(${i},'weight',this.value)" style="max-width:120px">
+              <input class="set-input" id="set-reps-${i}" type="number" inputmode="numeric" placeholder="${isTime ? '–' : 'reps'}" value="${done?.reps || ''}" onchange="updateSetData(${i},'reps',this.value)">
+              <button class="set-done-btn ${done ? 'done' : ''}" onclick="completeSet(${i},${ex.rest})" id="set-btn-${i}">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              </button>
+            </div>`;
+        }).join('')}
+      </div>`}
+      <div class="session-nav">
+        ${idx > 0 ? `<button class="btn btn-secondary" onclick="prevEx()">← Back</button>` : ''}
+        ${idx < total-1
+          ? `<button class="btn btn-primary" onclick="nextEx()">Next →</button>`
+          : `<button class="btn btn-success" onclick="finishSession()">Complete Session ✓</button>`}
+      </div>
+      ${idx > 0 ? '' : ''}
+      <button class="btn btn-danger" style="margin-top:8px;width:100%" onclick="endSession()">Quit Session</button>
+    </div>
+  `;
+}
+
+function updateSetData(setIdx, field, val) {
+  if (!activeSession) return;
+  if (!activeSession.setData[activeSession.exIdx]) return;
+  if (!activeSession.setData[activeSession.exIdx].doneSets[setIdx]) {
+    activeSession.setData[activeSession.exIdx].doneSets[setIdx] = {};
+  }
+  activeSession.setData[activeSession.exIdx].doneSets[setIdx][field] = val;
+}
+
+function completeSet(setIdx, restSeconds) {
+  if (!activeSession) return;
+  const ds = activeSession.setData[activeSession.exIdx].doneSets;
+  const weightEl = document.getElementById('set-weight-' + setIdx);
+  const repsEl = document.getElementById('set-reps-' + setIdx);
+  if (!ds[setIdx]) ds[setIdx] = {};
+  ds[setIdx].weight = weightEl ? weightEl.value : '';
+  ds[setIdx].reps = repsEl ? repsEl.value : '';
+  ds[setIdx].done = true;
+  const btn = document.getElementById('set-btn-' + setIdx);
+  if (btn) btn.classList.add('done');
+
+  // Auto-save PB if weight entered
+  const ex = PROGRAM[activeSession.mIdx].sessions[activeSession.sIdx].exercises[activeSession.exIdx];
+  const w = parseFloat(ds[setIdx].weight);
+  if (!isNaN(w) && w > 0) {
+    const pbs = getPBs();
+    if (!pbs[ex.id]) pbs[ex.id] = [];
+    pbs[ex.id].unshift({ w: w, d: new Date().toLocaleDateString('en-AU', {day:'numeric',month:'short'}) });
+    savePBs(pbs);
+  }
+
+  if (restSeconds > 0) startTimer(restSeconds, ex.name);
+}
+
+function nextEx() {
+  if (!activeSession) return;
+  const total = PROGRAM[activeSession.mIdx].sessions[activeSession.sIdx].exercises.length;
+  if (activeSession.exIdx < total - 1) { activeSession.exIdx++; renderActiveEx(); }
+}
+
+function prevEx() {
+  if (!activeSession) return;
+  if (activeSession.exIdx > 0) { activeSession.exIdx--; renderActiveEx(); }
+}
+
+function finishSession() {
+  if (activeSession) logSessionDone(activeSession.mIdx, activeSession.sIdx);
+  document.getElementById('session-active').style.display = 'none';
+  document.getElementById('session-complete').classList.add('show');
+  activeSession = null;
+}
+
+function endSession() {
+  activeSession = null;
+  document.getElementById('session-active').style.display = 'none';
+  document.getElementById('session-active').innerHTML = '';
+  document.getElementById('session-complete').classList.remove('show');
+  document.getElementById('session-picker').classList.remove('hide');
+  stopTimer();
+}
+
+// ─── REST TIMER ───────────────────────────────────────────────────────────────
+const CIRCUMFERENCE = 2 * Math.PI * 72; // r=72
+
+function startTimer(seconds, exName) {
+  stopTimer();
+  timerTotal = seconds;
+  timerRemaining = seconds;
+  document.getElementById('timer-ex-name').textContent = exName;
+  document.getElementById('rest-timer').classList.add('show');
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timerRemaining--;
+    updateTimerDisplay();
+    if (timerRemaining <= 0) {
+      stopTimer();
+      // Beep
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 0.15, 0.3].forEach(t => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.frequency.value = 880;
+          g.gain.setValueAtTime(0.3, ctx.currentTime + t);
+          g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + t + 0.12);
+          o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.12);
+        });
+      } catch(e) {}
+      document.getElementById('rest-timer').classList.remove('show');
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timerRemaining / 60);
+  const s = timerRemaining % 60;
+  document.getElementById('timer-display').textContent = m + ':' + String(s).padStart(2,'0');
+  const fill = document.getElementById('timer-ring-fill');
+  const progress = timerRemaining / timerTotal;
+  fill.style.strokeDasharray = CIRCUMFERENCE;
+  fill.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+function skipRest() {
+  stopTimer();
+  document.getElementById('rest-timer').classList.remove('show');
+}
+
+// ─── PB SCREEN ────────────────────────────────────────────────────────────────
+function filterPB(val, btn) {
+  currentPBFilter = val;
+  document.querySelectorAll('.pb-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPBs();
+}
+
+function renderPBs() {
+  const pbs = getPBs();
+  const list = document.getElementById('pb-list');
+  const swaps = getExSwaps();
+
+  // Only show weighted exercises; filter by month if needed
+  let base = ALL_EXERCISES.filter(ex => ex.pbTrack);
+  if (currentPBFilter !== 'all') base = base.filter(ex => ex.month === parseInt(currentPBFilter));
+
+  // For each exercise, compute the effective display name and storage key
+  const rows = base.map(ex => {
+    const swap = swaps[ex.id];
+    const effectiveId = swap ? ex.id + '::' + swap : ex.id;
+    const displayName = swap || ex.name;
+    return { ex, effectiveId, displayName };
+  }).filter(r => !NON_WEIGHTED_NAMES.has(r.displayName)); // strip any non-weighted alternatives
+
+  if (!rows.length) { list.innerHTML = '<div class="empty">No exercises found.</div>'; return; }
+
+  list.innerHTML = rows.map(({ ex, effectiveId, displayName }) => {
+    const domKey = pbDomId(effectiveId);
+    const entries = pbs[effectiveId] || [];
+    const best = entries.length ? Math.max(...entries.map(e => parseFloat(e.w) || 0)) : null;
+    const mColor = ['m1','m2','m3','m4'][ex.month - 1];
+    const isSwapped = effectiveId !== ex.id;
+    const nameHtml = isSwapped
+      ? `${displayName} <span class="badge" style="background:rgba(255,255,255,0.05);color:#555;font-size:9px">${ex.name.split(' ')[0]}</span> <span class="badge" style="background:rgba(255,255,255,0.08);color:var(--${mColor})">M${ex.month}</span>`
+      : `${displayName} <span class="badge" style="background:rgba(255,255,255,0.08);color:var(--${mColor})">M${ex.month}</span>`;
+    return `
+      <div class="pb-card">
+        <div class="pb-card-header" onclick="togglePBCard(this)">
+          <div><div class="pb-card-name">${nameHtml}</div></div>
+          <div class="${best ? 'pb-card-best' : 'pb-card-best no-pb'}">${best ? best + 'kg' : 'No logs'}</div>
+        </div>
+        <div class="pb-card-body" id="${domKey}-body">
+          <div class="pb-log-form">
+            <input type="number" inputmode="decimal" placeholder="Weight (kg)" id="${domKey}-input" step="0.5">
+            <button class="pb-log-btn" onclick="logPB('${effectiveId}')">Log</button>
+          </div>
+          <div class="pb-history" id="${domKey}-hist">
+            ${entries.length === 0 ? '<div class="empty" style="padding:12px 0 4px">No entries yet</div>' :
+              entries.map((e, i) => `
+                <div class="pb-entry ${parseFloat(e.w) === best ? 'is-pb' : ''}">
+                  <div class="pb-entry-weight">${e.w}kg ${parseFloat(e.w) === best ? '<span class="pb-entry-tag">PB</span>' : ''}</div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="pb-entry-date">${e.d}</div>
+                    <button class="pb-entry-delete" onclick="deletePBEntry('${effectiveId}',${i})">✕</button>
+                  </div>
+                </div>
+              `).join('')}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function togglePBCard(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function logPB(exId) {
+  const input = document.getElementById(pbDomId(exId) + '-input');
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val <= 0) { input.style.borderColor = 'var(--red)'; setTimeout(() => input.style.borderColor = '', 1000); return; }
+  const pbs = getPBs();
+  if (!pbs[exId]) pbs[exId] = [];
+  pbs[exId].unshift({ w: val, d: new Date().toLocaleDateString('en-AU', {day:'numeric',month:'short'}) });
+  savePBs(pbs);
+  input.value = '';
+  renderPBs();
+  const body = document.getElementById(pbDomId(exId) + '-body');
+  if (body) body.classList.add('open');
+}
+
+function deletePBEntry(exId, idx) {
+  const pbs = getPBs();
+  if (pbs[exId]) { pbs[exId].splice(idx, 1); savePBs(pbs); }
+  renderPBs();
+  const body = document.getElementById(pbDomId(exId) + '-body');
+  if (body) body.classList.add('open');
+}
+
+// ─── SESSION LOGGING ─────────────────────────────────────────────────────────
+function logSessionDone(mIdx, sIdx) {
+  const sessions = getSessions();
+  // Save per-exercise set data for "Last Time" display
+  let exData = [];
+  if (activeSession && activeSession.setData) {
+    exData = PROGRAM[mIdx].sessions[sIdx].exercises.map((ex, i) => {
+      const sd = activeSession.setData[i];
+      if (!sd || !sd.doneSets) return null;
+      const exName = getExName(ex);
+      const bw = NON_WEIGHTED_NAMES.has(ex.name) || NON_WEIGHTED_NAMES.has(exName);
+      if (bw) {
+        const completedSets = sd.doneSets.filter(s => s && s.done).length;
+        if (!completedSets && !sd.feel) return null;
+        return { name: exName, bw: true, completedSets, feel: sd.feel || null };
+      } else {
+        const sets = sd.doneSets
+          .map((s, si) => s && s.done && (s.weight || s.reps) ? { n: si + 1, w: s.weight || '', r: s.reps || '' } : null)
+          .filter(Boolean);
+        if (!sets.length) return null;
+        return { name: exName, sets };
+      }
+    }).filter(Boolean);
+  }
+  sessions.push({ m: mIdx, s: sIdx, d: new Date().toLocaleDateString('en-AU', {day:'numeric',month:'short'}), exData });
+  saveSessions(sessions);
+}
+
+function getLastSessionData(sIdx) {
+  const sessions = getSessions();
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    if (sessions[i].s === sIdx && sessions[i].exData && sessions[i].exData.length) {
+      return sessions[i].exData;
+    }
+  }
+  return null;
+}
+
+function togglePrevSummary() {
+  prevSummaryExpanded = !prevSummaryExpanded;
+  const body = document.querySelector('.prev-summary-body');
+  const arrow = document.querySelector('.prev-summary-arrow');
+  if (body) body.classList.toggle('open', prevSummaryExpanded);
+  if (arrow) arrow.classList.toggle('open', prevSummaryExpanded);
+}
+
+// ─── PROGRAM PROGRESS ────────────────────────────────────────────────────────
+function getProgramProgress() {
+  const done = getSessions().length;
+  const total = 32;
+  const weekNum = Math.min(Math.floor(done / 2) + 1, 16);
+  const monthIdx = Math.min(Math.floor(done / 8), 3);
+  const weekInMonth = Math.floor((done % 8) / 2) + 1;
+  const monthNum = monthIdx + 1;
+  return { done, total, weekNum, weekInMonth, monthIdx, monthNum };
+}
+
+// ─── TOP PBs ─────────────────────────────────────────────────────────────────
+function getTopPBs(n) {
+  const pbs = getPBs();
+  const swaps = getExSwaps();
+  return ALL_EXERCISES
+    .filter(e => e.pbTrack)
+    .map(e => {
+      const swap = swaps[e.id];
+      const effectiveId = swap ? e.id + '::' + swap : e.id;
+      const displayName = swap || e.name;
+      if (NON_WEIGHTED_NAMES.has(displayName)) return null;
+      const entries = pbs[effectiveId] || [];
+      const best = entries.length ? Math.max(...entries.map(x => parseFloat(x.w) || 0)) : null;
+      return { ...e, name: displayName, best };
+    })
+    .filter(e => e && e.best !== null)
+    .sort((a, b) => b.best - a.best)
+    .slice(0, n);
+}
+
+// ─── SPARKLINE ───────────────────────────────────────────────────────────────
+function renderSparkline(data, w, h) {
+  if (!data || data.length < 2) return '';
+  const vals = data.map(d => d.h);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const range = max - min || 1;
+  const count = vals.length;
+  const barW = Math.max(3, Math.floor((w - (count - 1) * 2) / count));
+  const gap = count > 1 ? Math.floor((w - barW * count) / (count - 1)) : 0;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block">
+    ${vals.map((v, i) => {
+      const barH = Math.max(3, Math.round(((v - min) / range) * (h - 6)) + 3);
+      const x = i * (barW + gap);
+      const y = h - barH;
+      const isLast = i === vals.length - 1;
+      return `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="1" fill="${isLast ? 'var(--accent)' : 'rgba(255,255,255,0.18)'}"/>`;
+    }).join('')}
+  </svg>`;
+}
+
+// ─── HOME SCREEN ─────────────────────────────────────────────────────────────
+function renderHome() {
+  const prog = getProgramProgress();
+
+  // Weekly progress ring — 2 sessions per week, cycle resets each week
+  const RING_CIRC = 502.65; // 2π × r80
+  const weekSessionsDone = prog.done >= prog.total ? 2 : (prog.done % 2);
+  const weekProgress = weekSessionsDone / 2;
+  const completedWeeks = Math.floor(prog.done / 2);
+
+  // Next session in linear 32-session sequence
+  let nextSession = null;
+  if (prog.done < prog.total) {
+    const nextIdx = prog.done;
+    const mIdx = Math.min(Math.floor(nextIdx / 8), 3);
+    const sIdx = (nextIdx % 8) % 2;
+    nextSession = { mIdx, sIdx, m: PROGRAM[mIdx], s: PROGRAM[mIdx].sessions[sIdx] };
+  }
+
+  const phaseDescs = ['Hypertrophy & Tissue Prep', 'Max Strength', 'Power Development', 'Elastic & Reactive'];
+  const phaseDesc = phaseDescs[prog.monthIdx];
+  const trainingDays = getTrainingDays();
+
+  // Most recently added PB entry per exercise (unshift pattern means [0] is newest)
+  const pbs = getPBs();
+  const recentPBs = ALL_EXERCISES
+    .filter(e => e.pbTrack && pbs[e.id] && pbs[e.id].length > 0)
+    .map(e => ({ name: e.name, w: pbs[e.id][0].w, d: pbs[e.id][0].d }))
+    .slice(0, 2);
+
+  document.getElementById('screen-home').innerHTML = `
+
+    <!-- PHASE BAR -->
+    <div class="home-phase-bar">
+      <div>
+        <div class="home-phase-name">Phase ${prog.monthNum}</div>
+        <div class="home-phase-sub">${phaseDesc}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:24px;font-weight:600;color:var(--text);font-feature-settings:'tnum';line-height:1;letter-spacing:-0.01em">W${prog.weekNum}</div>
+        <div style="font-size:10px;font-weight:500;color:#666;letter-spacing:0.05em;margin-top:3px">of 16</div>
+      </div>
+    </div>
+
+    <!-- RING HERO -->
+    <div class="home-ring-section">
+      <div class="home-ring-wrap">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <defs>
+            <linearGradient id="hring-grad" x1="1" y1="0" x2="0" y2="0">
+              <stop offset="0%" stop-color="#D4D4D4"/>
+              <stop offset="100%" stop-color="#8A8A8A"/>
+            </linearGradient>
+          </defs>
+          <circle cx="90" cy="90" r="80" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
+          <circle cx="90" cy="90" r="80" fill="none" stroke="url(#hring-grad)" stroke-width="10"
+            stroke-linecap="round"
+            stroke-dasharray="${RING_CIRC}"
+            stroke-dashoffset="${(RING_CIRC * (1 - weekProgress)).toFixed(1)}"/>
+        </svg>
+        <div class="home-ring-inner">
+          <div class="home-ring-num">${weekSessionsDone}</div>
+          <div class="home-ring-denom">/ 2</div>
+        </div>
+      </div>
+      <div class="home-ring-label">Sessions this week</div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="home-stat-row">
+      <div class="home-stat-card">
+        <div class="home-stat-icon">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div class="home-stat-num">${completedWeeks}</div>
+        <div class="home-stat-lbl">Weeks trained</div>
+      </div>
+      <div class="home-stat-card">
+        <div class="home-stat-icon">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="home-stat-num">${prog.done}<span style="font-size:14px;font-weight:400;color:var(--sub)">/32</span></div>
+        <div class="home-stat-lbl">Sessions done</div>
+      </div>
+    </div>
+
+    <!-- PERSONAL BESTS -->
+    <div class="home-card-label">Personal Bests</div>
+    <div class="home-pb-scroll">
+      ${HOME_PB_DEFS.map(ex => {
+        const pb = getHomePBData(ex.ids);
+        return `<div class="home-pb-card">
+          <div class="home-pb-ex-name">${ex.label}</div>
+          <div><span class="home-pb-num">${pb.best !== null ? pb.best : '\u2014'}</span>${pb.best !== null ? '<span class="home-pb-unit">kg</span>' : ''}</div>
+          <div class="home-pb-date">${pb.date ? pb.date : 'No data'}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- NEXT SESSION -->
+    ${nextSession ? `
+      <div class="home-next-card">
+        <div class="home-card-label">Next Session</div>
+        <div class="home-next-header">
+          <div>
+            <div class="home-next-title">Month ${nextSession.mIdx + 1} \u2014 ${trainingDays[nextSession.sIdx]}</div>
+            <div class="home-next-desc">${nextSession.s.label}</div>
+          </div>
+          <button class="home-next-btn" onclick="goToSession(${nextSession.mIdx},${nextSession.sIdx})">Start</button>
+        </div>
+        <div class="home-next-exlist">
+          ${nextSession.s.exercises.slice(0, 3).map(e => `<div class="home-next-ex">\u00B7 ${e.name}</div>`).join('')}
+          ${nextSession.s.exercises.length > 3 ? `<div class="home-next-ex" style="color:#555">+${nextSession.s.exercises.length - 3} more</div>` : ''}
+        </div>
+      </div>
+    ` : `
+      <div class="home-next-card" style="text-align:center;padding:24px 16px">
+        <div style="font-size:13px;color:var(--sub)">Program complete \u2014 time to test your vert!</div>
+      </div>
+    `}
+
+    <!-- RECENT PRs -->
+    ${recentPBs.length > 0 ? `
+      <div class="home-card-label">Recent PRs</div>
+      <div class="home-pr-card">
+        ${recentPBs.map(pb => `
+          <div class="home-pr-row">
+            <div class="home-pr-name">${pb.name}</div>
+            <div style="text-align:right;flex-shrink:0">
+              <div class="home-pr-weight">${pb.w}kg</div>
+              <div class="home-pr-date">${pb.d}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+
+    <!-- TRAINING SCHEDULE -->
+    <div class="home-next-card">
+      <div class="home-card-label">Training Schedule</div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1">
+          <div class="home-day-label">Session 1</div>
+          <select class="home-day-select" onchange="changeTrainingDay(0,this.value)">
+            ${DAYS_OF_WEEK.map(d => `<option value="${d}"${d === trainingDays[0] ? ' selected' : ''}>${d}</option>`).join('')}
+          </select>
+        </div>
+        <div style="flex:1">
+          <div class="home-day-label">Session 2</div>
+          <select class="home-day-select" onchange="changeTrainingDay(1,this.value)">
+            ${DAYS_OF_WEEK.map(d => `<option value="${d}"${d === trainingDays[1] ? ' selected' : ''}>${d}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function logJumpFromHome() {
+  const input = document.getElementById('home-jump-input');
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val <= 0) {
+    input.style.borderColor = 'var(--red)';
+    setTimeout(() => input.style.borderColor = '', 1000);
+    return;
+  }
+  const jumps = getJumps();
+  jumps.unshift({ h: val, d: new Date().toLocaleDateString('en-AU', {day:'numeric',month:'short'}) });
+  saveJumps(jumps);
+  input.value = '';
+  renderHome();
+}
+
+function goToSession(mIdx, sIdx) {
+  showScreen('session', document.getElementById('nav-session'));
+  startSession(mIdx, sIdx);
+}
+
+// ─── HISTORY SCREEN ──────────────────────────────────────────────────────────
+function renderHistory() {
+  if (historyView === 'detail' && historyDetailIdx >= 0) {
+    renderHistoryDetail(historyDetailIdx);
+  } else {
+    historyView = 'list';
+    renderHistoryList();
+  }
+}
+
+function renderHistoryList() {
+  const sessions = getSessions();
+  const el = document.getElementById('screen-history');
+
+  if (!sessions.length) {
+    el.innerHTML = `
+      <h2 style="margin-bottom:6px">History</h2>
+      <div class="empty" style="padding-top:40px">No sessions logged yet.</div>
+    `;
+    return;
+  }
+
+  // Reverse to show most recent first, keep original index for operations
+  const items = sessions.map((s, i) => ({ ...s, origIdx: i })).reverse();
+
+  el.innerHTML = `
+    <h2 style="margin-bottom:16px">History</h2>
+    ${items.map(s => {
+      const prog = PROGRAM[s.m];
+      const label = prog && prog.sessions[s.s] ? prog.sessions[s.s].label : 'Session';
+      const mColor = ['m1','m2','m3','m4'][s.m] || 'm1';
+      const exCount = (s.exData || []).length;
+      return `
+        <div class="hist-item" onclick="openHistoryDetail(${s.origIdx})">
+          <div class="hist-item-left">
+            <div class="hist-item-date">${s.d} &nbsp;<span class="badge" style="background:rgba(255,255,255,0.06);color:var(--${mColor})">M${s.m + 1}</span></div>
+            <div class="hist-item-name">${label}</div>
+            ${exCount ? `<div class="hist-item-meta">${exCount} exercise${exCount !== 1 ? 's' : ''} logged</div>` : ''}
+          </div>
+          <div class="hist-item-arrow">›</div>
+        </div>
+      `;
+    }).join('')}
+    <div class="hist-undo-section">
+      ${undoConfirmPending ? `
+        <div class="hist-confirm-box">
+          <p>Remove the most recent session? This cannot be undone.</p>
+          <div class="hist-confirm-btns">
+            <button class="hist-confirm-yes" onclick="executeUndoSession()">Remove</button>
+            <button class="hist-confirm-no" onclick="cancelHistoryAction()">Cancel</button>
+          </div>
+        </div>
+      ` : `
+        <button class="hist-action-btn danger" onclick="undoLastSession()">↩ Undo Last Session</button>
+      `}
+    </div>
+  `;
+}
+
+function renderHistoryDetail(idx) {
+  const sessions = getSessions();
+  const s = sessions[idx];
+  if (!s) { historyView = 'list'; renderHistoryList(); return; }
+
+  const el = document.getElementById('screen-history');
+  const prog = PROGRAM[s.m];
+  const label = prog && prog.sessions[s.s] ? prog.sessions[s.s].label : 'Session';
+  const mColor = ['m1','m2','m3','m4'][s.m] || 'm1';
+  const exData = s.exData || [];
+
+  el.innerHTML = `
+    <div class="hist-detail-back" onclick="backToHistoryList()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      History
+    </div>
+    <div class="hist-detail-title">${label}</div>
+    <div class="hist-detail-date">${s.d} · <span style="color:var(--${mColor})">Month ${s.m + 1}</span></div>
+
+    ${exData.length === 0
+      ? '<div class="empty" style="padding:20px 0">No exercise data recorded for this session.</div>'
+      : exData.map(ex => {
+          if (ex.bw) {
+            const feelStr = ex.feel ? ' · ' + feelLabel(ex.feel) : '';
+            return `
+              <div class="hist-ex-card">
+                <div class="hist-ex-name">${ex.name}</div>
+                <div class="hist-feel">${ex.completedSets} set${ex.completedSets !== 1 ? 's' : ''} completed${feelStr}</div>
+              </div>
+            `;
+          } else {
+            return `
+              <div class="hist-ex-card">
+                <div class="hist-ex-name">${ex.name}</div>
+                ${ex.sets.map(set => `
+                  <div class="hist-ex-row">
+                    <span>Set ${set.n}</span>
+                    <span class="hist-ex-val">${set.w ? set.w + 'kg' : '—'} × ${set.r || '—'}</span>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }
+        }).join('')
+    }
+
+    <div class="hist-action-row">
+      ${deleteConfirmIdx === idx ? `
+        <div class="hist-confirm-box">
+          <p>Delete this session permanently?</p>
+          <div class="hist-confirm-btns">
+            <button class="hist-confirm-yes" onclick="executeDeleteSession(${idx})">Delete</button>
+            <button class="hist-confirm-no" onclick="cancelHistoryAction()">Cancel</button>
+          </div>
+        </div>
+      ` : `
+        <button class="hist-action-btn danger" onclick="showDeleteConfirm(${idx})">Delete Session</button>
+      `}
+    </div>
+  `;
+}
+
+function openHistoryDetail(idx) {
+  historyView = 'detail';
+  historyDetailIdx = idx;
+  deleteConfirmIdx = null;
+  renderHistoryDetail(idx);
+}
+
+function backToHistoryList() {
+  historyView = 'list';
+  historyDetailIdx = -1;
+  undoConfirmPending = false;
+  deleteConfirmIdx = null;
+  renderHistoryList();
+}
+
+function undoLastSession() {
+  undoConfirmPending = true;
+  renderHistoryList();
+}
+
+function executeUndoSession() {
+  const sessions = getSessions();
+  if (sessions.length) { sessions.pop(); saveSessions(sessions); }
+  undoConfirmPending = false;
+  renderHistoryList();
+}
+
+function showDeleteConfirm(idx) {
+  deleteConfirmIdx = idx;
+  renderHistoryDetail(idx);
+}
+
+function executeDeleteSession(idx) {
+  const sessions = getSessions();
+  sessions.splice(idx, 1);
+  saveSessions(sessions);
+  deleteConfirmIdx = null;
+  historyView = 'list';
+  historyDetailIdx = -1;
+  renderHistoryList();
+}
+
+function cancelHistoryAction() {
+  undoConfirmPending = false;
+  deleteConfirmIdx = null;
+  if (historyView === 'detail') renderHistoryDetail(historyDetailIdx);
+  else renderHistoryList();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderHome();
+renderProgram();
+renderSessionPicker();
+
+// ─── SERVICE WORKER REGISTRATION ─────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
