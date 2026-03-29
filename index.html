@@ -508,6 +508,28 @@ const NON_PB_IDS = new Set([
   'm4w2','m4w3','m4w4','m4s1','m4s2','m4s3','m4s4'  // M4: all reactive/sprint work
 ]);
 
+// Input field type per exercise.
+// 'weighted'   → weight (kg) + reps            [default for unlisted]
+// 'iso_band'   → seconds + band text
+// 'iso_bw'     → seconds + notes text
+// 'timed_min'  → 1 row: minutes + notes text
+// 'reps_notes' → reps + notes text + feel rating
+const EX_INPUT_TYPE = {
+  // Isometric holds — with band
+  'm1s3':'iso_band',
+  // Isometric holds — bodyweight
+  'm2s2':'iso_bw', 'm2s4':'iso_bw',
+  // Single timed block (no set structure)
+  'm1s5':'timed_min',
+  // BW / plyo / skill work — reps + notes
+  'm1w1':'reps_notes', 'm1w7':'reps_notes', 'm1w8':'reps_notes',
+  'm2w1':'reps_notes', 'm2w7':'reps_notes',
+  'm3w3':'reps_notes', 'm3w5':'reps_notes', 'm3w6':'reps_notes',
+  'm3s1':'reps_notes', 'm3s2':'reps_notes', 'm3s3':'reps_notes', 'm3s4':'reps_notes',
+  'm4w2':'reps_notes', 'm4w3':'reps_notes', 'm4w4':'reps_notes',
+  'm4s1':'reps_notes', 'm4s2':'reps_notes', 'm4s3':'reps_notes', 'm4s4':'reps_notes',
+};
+
 // All unique exercises for PB tracking
 const ALL_EXERCISES = [];
 PROGRAM.forEach(m => m.sessions.forEach(s => s.exercises.forEach(e => {
@@ -807,11 +829,17 @@ function renderActiveEx() {
   const pct = (idx / total) * 100;
   const pbVal = getBestPB(getEffectiveExId(ex));
 
-  // Parse sets count
+  // Per-exercise type → drives field labels, keyboard, and feel-row visibility
   const setsMatch = ex.sets.match(/^(\d+)/);
-  const numSets = setsMatch ? parseInt(setsMatch[1]) : 3;
-  const isTime = ex.sets.includes('s') || ex.sets.includes('min') || ex.id.includes('s3') || ex.id.includes('s4') || ex.id.includes('s5');
-  const isBW = NON_WEIGHTED_NAMES.has(ex.name) || NON_WEIGHTED_NAMES.has(getExName(ex));
+  const exType = EX_INPUT_TYPE[ex.id] || 'weighted';
+  const numSets = exType === 'timed_min' ? 1 : (setsMatch ? parseInt(setsMatch[1]) : 3);
+  const fieldCfg = {
+    weighted:   { left:'weight (kg)', leftMode:'decimal',  right:'reps',  rightType:'number', rightMode:'numeric', feel:false },
+    iso_band:   { left:'seconds',     leftMode:'numeric',  right:'band (optional)',  rightType:'text',   rightMode:'text',    feel:false },
+    iso_bw:     { left:'seconds',     leftMode:'numeric',  right:'notes (optional)', rightType:'text',   rightMode:'text',    feel:false },
+    timed_min:  { left:'minutes',     leftMode:'decimal',  right:'notes (optional)', rightType:'text',   rightMode:'text',    feel:false },
+    reps_notes: { left:'reps',        leftMode:'numeric',  right:'notes (optional)', rightType:'text',   rightMode:'text',    feel:true  },
+  }[exType];
 
   const sd = activeSession.setData[idx];
   const doneSets = sd.doneSets;
@@ -823,12 +851,19 @@ function renderActiveEx() {
           <div class="prev-ex-name">${prev.name}</div>
           ${prev.bw
             ? `<div class="prev-set-line">${prev.completedSets} set${prev.completedSets !== 1 ? 's' : ''} completed${prev.feel ? ' · ' + feelLabel(prev.feel) : ''}</div>`
-            : prev.sets.map(s => {
-                const parts = [];
-                if (s.w) parts.push(s.w + 'kg');
-                if (s.r) parts.push(s.r + ' reps');
-                return `<div class="prev-set-line">Set ${s.n}: ${parts.length ? parts.join(' × ') : '—'}</div>`;
-              }).join('')
+            : (() => {
+                const t = prev.exType || (prev.timeType === 'isometric' ? 'iso_bw' : prev.timeType === 'timed' ? 'timed_min' : 'weighted');
+                const lines = (prev.sets || []).map(s => {
+                  const parts = [];
+                  if (t === 'reps_notes') { if (s.w) parts.push(s.w + ' reps'); if (s.r) parts.push(s.r); }
+                  else if (t === 'iso_band' || t === 'iso_bw') { if (s.w) parts.push(s.w + 's'); if (s.r) parts.push(s.r); }
+                  else if (t === 'timed_min') { if (s.w) parts.push(s.w + 'min'); if (s.r) parts.push(s.r); }
+                  else { if (s.w) parts.push(s.w + 'kg'); if (s.r) parts.push(s.r + ' reps'); }
+                  return `<div class="prev-set-line">Set ${s.n}: ${parts.length ? parts.join(' · ') : '—'}</div>`;
+                });
+                if (prev.feel) lines.push(`<div class="prev-set-line">${feelLabel(prev.feel)}</div>`);
+                return lines.join('');
+              })()
           }
         </div>`).join('')
     : '<div class="prev-empty">No previous session data</div>';
@@ -853,16 +888,21 @@ function renderActiveEx() {
       </div>
       <div class="ex-card-sets">💪 ${ex.sets} &nbsp;⏱ ${ex.rest > 0 ? (ex.rest >= 60 ? Math.floor(ex.rest/60) + ':' + String(ex.rest%60).padStart(2,'0') : ex.rest + 's') : '—'} rest</div>
       <div class="ex-card-note">${ex.note}</div>
-      ${isBW ? `
-      <div class="bw-sets-row">
+      <div class="sets-grid">
         ${Array.from({length: numSets}, (_, i) => {
-          const done = doneSets[i] && doneSets[i].done;
-          return `<button class="bw-set-btn${done ? ' done' : ''}" id="bw-set-${i}" onclick="toggleBWSet(${i},${ex.rest})">
-            <div class="bw-set-lbl">S${i+1}</div>
-            <div class="bw-set-circle"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
-          </button>`;
+          const done = doneSets[i];
+          return `
+            <div class="set-row" id="set-row-${i}">
+              <div class="set-num">S${i+1}</div>
+              <input class="set-input" id="set-weight-${i}" type="number" inputmode="${fieldCfg.leftMode}" placeholder="${fieldCfg.left}" value="${done?.weight || ''}" onchange="updateSetData(${i},'weight',this.value)" style="max-width:120px">
+              <input class="set-input" id="set-reps-${i}" type="${fieldCfg.rightType}" inputmode="${fieldCfg.rightMode}" placeholder="${fieldCfg.right}" value="${done?.reps || ''}" onchange="updateSetData(${i},'reps',this.value)">
+              <button class="set-done-btn ${done?.done ? 'done' : ''}" onclick="completeSet(${i},${ex.rest})" id="set-btn-${i}">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              </button>
+            </div>`;
         }).join('')}
       </div>
+      ${fieldCfg.feel ? `
       <div class="feel-row">
         <div class="feel-row-label">Session Feel</div>
         <div class="feel-options">
@@ -870,21 +910,7 @@ function renderActiveEx() {
           <button class="feel-btn feel-solid${sd.feel === 'solid' ? ' active' : ''}" id="feel-solid" onclick="setFeel('solid')">👍 Solid</button>
           <button class="feel-btn feel-explosive${sd.feel === 'explosive' ? ' active' : ''}" id="feel-explosive" onclick="setFeel('explosive')">🔥 Explosive</button>
         </div>
-      </div>` : `
-      <div class="sets-grid">
-        ${Array.from({length: numSets}, (_, i) => {
-          const done = doneSets[i];
-          return `
-            <div class="set-row" id="set-row-${i}">
-              <div class="set-num">S${i+1}</div>
-              <input class="set-input" id="set-weight-${i}" type="number" inputmode="decimal" placeholder="${isTime ? 'time/notes' : 'weight (kg)'}" value="${done?.weight || ''}" onchange="updateSetData(${i},'weight',this.value)" style="max-width:120px">
-              <input class="set-input" id="set-reps-${i}" type="number" inputmode="numeric" placeholder="${isTime ? '–' : 'reps'}" value="${done?.reps || ''}" onchange="updateSetData(${i},'reps',this.value)">
-              <button class="set-done-btn ${done ? 'done' : ''}" onclick="completeSet(${i},${ex.rest})" id="set-btn-${i}">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              </button>
-            </div>`;
-        }).join('')}
-      </div>`}
+      </div>` : ''}
       <div class="session-nav">
         ${idx > 0 ? `<button class="btn btn-secondary" onclick="prevEx()">← Back</button>` : ''}
         ${idx < total-1
@@ -918,10 +944,10 @@ function completeSet(setIdx, restSeconds) {
   const btn = document.getElementById('set-btn-' + setIdx);
   if (btn) btn.classList.add('done');
 
-  // Auto-save PB if weight entered
+  // Auto-save PB for weighted exercises only
   const ex = PROGRAM[activeSession.mIdx].sessions[activeSession.sIdx].exercises[activeSession.exIdx];
   const w = parseFloat(ds[setIdx].weight);
-  if (!isNaN(w) && w > 0) {
+  if ((EX_INPUT_TYPE[ex.id] || 'weighted') === 'weighted' && !isNaN(w) && w > 0) {
     const pbs = getPBs();
     if (!pbs[ex.id]) pbs[ex.id] = [];
     pbs[ex.id].unshift({ w: w, d: new Date().toLocaleDateString('en-AU', {day:'numeric',month:'short'}) });
@@ -1112,17 +1138,18 @@ function logSessionDone(mIdx, sIdx) {
       const sd = activeSession.setData[i];
       if (!sd || !sd.doneSets) return null;
       const exName = getExName(ex);
-      const bw = NON_WEIGHTED_NAMES.has(ex.name) || NON_WEIGHTED_NAMES.has(exName);
-      if (bw) {
-        const completedSets = sd.doneSets.filter(s => s && s.done).length;
-        if (!completedSets && !sd.feel) return null;
-        return { name: exName, bw: true, completedSets, feel: sd.feel || null };
+      const exType = EX_INPUT_TYPE[ex.id] || 'weighted';
+      const sets = sd.doneSets
+        .map((s, si) => s && s.done && (s.weight || s.reps) ? { n: si + 1, w: s.weight || '', r: s.reps || '' } : null)
+        .filter(Boolean);
+      if (exType === 'reps_notes') {
+        if (!sets.length && !sd.feel) return null;
+        const entry = { name: exName, exType, sets };
+        if (sd.feel) entry.feel = sd.feel;
+        return entry;
       } else {
-        const sets = sd.doneSets
-          .map((s, si) => s && s.done && (s.weight || s.reps) ? { n: si + 1, w: s.weight || '', r: s.reps || '' } : null)
-          .filter(Boolean);
         if (!sets.length) return null;
-        return { name: exName, sets };
+        return exType !== 'weighted' ? { name: exName, exType, sets } : { name: exName, sets };
       }
     }).filter(Boolean);
   }
@@ -1460,6 +1487,7 @@ function renderHistoryDetail(idx) {
       ? '<div class="empty" style="padding:20px 0">No exercise data recorded for this session.</div>'
       : exData.map(ex => {
           if (ex.bw) {
+            // legacy format from older sessions
             const feelStr = ex.feel ? ' · ' + feelLabel(ex.feel) : '';
             return `
               <div class="hist-ex-card">
@@ -1468,15 +1496,19 @@ function renderHistoryDetail(idx) {
               </div>
             `;
           } else {
+            const t = ex.exType || (ex.timeType === 'isometric' ? 'iso_bw' : ex.timeType === 'timed' ? 'timed_min' : 'weighted');
             return `
               <div class="hist-ex-card">
                 <div class="hist-ex-name">${ex.name}</div>
-                ${ex.sets.map(set => `
-                  <div class="hist-ex-row">
-                    <span>Set ${set.n}</span>
-                    <span class="hist-ex-val">${set.w ? set.w + 'kg' : '—'} × ${set.r || '—'}</span>
-                  </div>
-                `).join('')}
+                ${(ex.sets || []).map(set => {
+                  let val;
+                  if (t === 'reps_notes') val = `${set.w ? set.w + ' reps' : '—'}${set.r ? ' · ' + set.r : ''}`;
+                  else if (t === 'iso_band' || t === 'iso_bw') val = `${set.w ? set.w + 's' : '—'}${set.r ? ' · ' + set.r : ''}`;
+                  else if (t === 'timed_min') val = `${set.w ? set.w + 'min' : '—'}${set.r ? ' · ' + set.r : ''}`;
+                  else val = `${set.w ? set.w + 'kg' : '—'} × ${set.r || '—'}`;
+                  return `<div class="hist-ex-row"><span>Set ${set.n}</span><span class="hist-ex-val">${val}</span></div>`;
+                }).join('')}
+                ${ex.feel ? `<div class="hist-feel">${feelLabel(ex.feel)}</div>` : ''}
               </div>
             `;
           }
