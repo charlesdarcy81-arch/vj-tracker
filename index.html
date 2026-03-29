@@ -893,29 +893,27 @@ function renderActiveEx() {
   const sd = activeSession.setData[idx];
   const doneSets = sd.doneSets;
 
-  const lastSessionData = getLastSessionData(activeSession.sIdx);
-  const prevBodyHtml = lastSessionData
-    ? lastSessionData.map(prev => `
-        <div class="prev-ex">
-          <div class="prev-ex-name">${prev.name}</div>
-          ${prev.bw
-            ? `<div class="prev-set-line">${prev.completedSets} set${prev.completedSets !== 1 ? 's' : ''} completed${prev.feel ? ' · ' + feelLabel(prev.feel) : ''}</div>`
-            : (() => {
-                const t = prev.exType || (prev.timeType === 'isometric' ? 'iso_bw' : prev.timeType === 'timed' ? 'timed_min' : 'weighted');
-                const lines = (prev.sets || []).map(s => {
-                  const parts = [];
-                  if (t === 'reps_notes') { if (s.w) parts.push(s.w + ' reps'); if (s.r) parts.push(s.r); }
-                  else if (t === 'iso_band' || t === 'iso_bw') { if (s.w) parts.push(s.w + 's'); if (s.r) parts.push(s.r); }
-                  else if (t === 'timed_min') { if (s.w) parts.push(s.w + 'min'); if (s.r) parts.push(s.r); }
-                  else { if (s.w) parts.push(s.w + 'kg'); if (s.r) parts.push(s.r + ' reps'); }
-                  return `<div class="prev-set-line">Set ${s.n}: ${parts.length ? parts.join(' · ') : '—'}</div>`;
-                });
-                if (prev.feel) lines.push(`<div class="prev-set-line">${feelLabel(prev.feel)}</div>`);
-                return lines.join('');
-              })()
-          }
-        </div>`).join('')
-    : '<div class="prev-empty">No previous session data</div>';
+  const lastSessionData = getLastSessionData(activeSession.mIdx, activeSession.sIdx);
+  const currentExName = getExName(ex);
+  const prevMatch = lastSessionData ? lastSessionData.find(p => p.name === currentExName) : null;
+  const prevBodyHtml = prevMatch
+    ? (() => {
+        if (prevMatch.bw) {
+          return `<div class="prev-set-line">${prevMatch.completedSets} set${prevMatch.completedSets !== 1 ? 's' : ''} completed${prevMatch.feel ? ' · ' + feelLabel(prevMatch.feel) : ''}</div>`;
+        }
+        const t = prevMatch.exType || 'weighted';
+        const lines = (prevMatch.sets || []).map(s => {
+          const parts = [];
+          if (t === 'reps_notes') { if (s.w) parts.push(s.w + ' reps'); if (s.r) parts.push(s.r); }
+          else if (t === 'iso_band' || t === 'iso_bw') { if (s.w) parts.push(s.w + 's'); if (s.r) parts.push(s.r); }
+          else if (t === 'timed_min') { if (s.w) parts.push(s.w + 'min'); if (s.r) parts.push(s.r); }
+          else { if (s.w) parts.push(s.w + 'kg'); if (s.r) parts.push(s.r + ' reps'); }
+          return `<div class="prev-set-line">Set ${s.n}: ${parts.length ? parts.join(' · ') : '—'}</div>`;
+        });
+        if (prevMatch.feel) lines.push(`<div class="prev-set-line">${feelLabel(prevMatch.feel)}</div>`);
+        return lines.join('') || '<div class="prev-empty">No data recorded last time</div>';
+      })()
+    : '<div class="prev-empty">No previous data for this exercise</div>';
 
   const html = `
     <div class="session-status">
@@ -1019,8 +1017,9 @@ function completeSet(setIdx, restSeconds) {
   const w = parseFloat(ds[setIdx].weight);
   if ((EX_INPUT_TYPE[ex.id] || 'weighted') === 'weighted' && !isNaN(w) && w > 0) {
     const pbs = getPBs();
-    if (!pbs[ex.id]) pbs[ex.id] = [];
-    pbs[ex.id].unshift({ w: w, d: new Date().toLocaleDateString('en-AU', {day:'numeric',month:'short'}) });
+    const pbKey = getEffectiveExId(ex);
+    if (!pbs[pbKey]) pbs[pbKey] = [];
+    pbs[pbKey].unshift({ w: w, d: new Date().toLocaleDateString('en-AU', {day:'numeric',month:'short'}) });
     savePBs(pbs);
   }
 
@@ -1227,10 +1226,10 @@ function logSessionDone(mIdx, sIdx) {
   saveSessions(sessions);
 }
 
-function getLastSessionData(sIdx) {
+function getLastSessionData(mIdx, sIdx) {
   const sessions = getSessions();
   for (let i = sessions.length - 1; i >= 0; i--) {
-    if (sessions[i].s === sIdx && sessions[i].exData && sessions[i].exData.length) {
+    if (sessions[i].m === mIdx && sessions[i].s === sIdx && sessions[i].exData && sessions[i].exData.length) {
       return sessions[i].exData;
     }
   }
@@ -1566,7 +1565,7 @@ function renderHistoryDetail(idx) {
               </div>
             `;
           } else {
-            const t = ex.exType || (ex.timeType === 'isometric' ? 'iso_bw' : ex.timeType === 'timed' ? 'timed_min' : 'weighted');
+            const t = ex.exType || 'weighted';
             return `
               <div class="hist-ex-card">
                 <div class="hist-ex-name">${ex.name}</div>
