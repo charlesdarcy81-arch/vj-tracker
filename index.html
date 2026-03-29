@@ -148,6 +148,28 @@
   .feel-btn.active.feel-solid { background: rgba(46,204,113,0.1); border-color: rgba(46,204,113,0.35); color: #2ECC71; }
   .feel-btn.active.feel-explosive { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.4); color: #f97316; }
 
+  /* EXERCISE PROGRESS STRIP */
+  .ex-strip { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 2px 0 6px; margin-bottom: 12px; }
+  .ex-strip::-webkit-scrollbar { display: none; }
+  .ex-pill { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; border: 1px solid transparent; transition: background 0.15s ease; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+  .ex-pill.done { background: rgba(46,204,113,0.08); border-color: rgba(46,204,113,0.2); color: #2ECC71; cursor: pointer; }
+  .ex-pill.done:active { background: rgba(46,204,113,0.16); }
+  .ex-pill.current { background: rgba(192,192,192,0.1); border-color: rgba(192,192,192,0.25); color: var(--accent); }
+  .ex-pill.upcoming { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.04); color: #333; cursor: default; }
+  .ex-pill-check { flex-shrink: 0; width: 10px; height: 10px; }
+  /* WHY THIS ORDER BUTTON */
+  .order-info-btn { background: none; border: none; color: #444; font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; padding: 0; display: flex; align-items: center; gap: 4px; transition: color 0.2s ease; -webkit-appearance: none; }
+  .order-info-btn:active { color: var(--sub); }
+  /* ORDER OVERLAY */
+  #order-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 300; display: none; align-items: center; justify-content: center; padding: 24px; }
+  #order-overlay.show { display: flex; }
+  .order-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; max-width: 340px; width: 100%; }
+  .order-card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--sub); margin-bottom: 14px; }
+  .order-card-body { font-size: 14px; color: var(--text); line-height: 1.75; margin-bottom: 20px; }
+  .order-card-body strong { color: var(--text); font-weight: 600; display: block; margin-bottom: 10px; }
+  .order-card-dismiss { width: 100%; padding: 13px; background: linear-gradient(180deg, #D4D4D4, #8A8A8A); border: none; border-radius: 8px; color: #0A0A0A; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; -webkit-appearance: none; appearance: none; transition: opacity 0.2s ease; }
+  .order-card-dismiss:active { opacity: 0.8; }
+
   /* SESSION NAV BUTTONS */
   .session-nav { display: flex; gap: 8px; margin-top: 12px; }
   .btn { padding: 13px 16px; min-height: 44px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif; flex: 1; transition: opacity 0.2s ease; letter-spacing: 0.02em; -webkit-appearance: none; appearance: none; }
@@ -372,6 +394,19 @@
       History
     </button>
   </nav>
+</div>
+
+<!-- WHY THIS ORDER OVERLAY -->
+<div id="order-overlay">
+  <div class="order-card">
+    <div class="order-card-title">Why This Order?</div>
+    <div class="order-card-body">
+      <strong>Exercises are ordered for a reason.</strong>
+      Each session is sequenced to prepare your body safely before loading it. Activation and prehab exercises prime your joints and connective tissue first, so the heavier strength work that follows is both safer and more effective.<br><br>
+      Skipping ahead or reordering increases injury risk and reduces performance gains. Trust the process — follow the order.
+    </div>
+    <button class="order-card-dismiss" onclick="dismissOrderOverlay()">Got it</button>
+  </div>
 </div>
 
 <!-- REST TIMER OVERLAY -->
@@ -817,6 +852,20 @@ function startSession(mIdx, sIdx) {
   document.getElementById('session-complete').classList.remove('show');
   document.getElementById('session-active').style.display = 'block';
   renderActiveEx();
+  if (!localStorage.getItem('vj_order_seen')) showOrderOverlay();
+}
+
+function showOrderOverlay() {
+  document.getElementById('order-overlay').classList.add('show');
+}
+function dismissOrderOverlay() {
+  document.getElementById('order-overlay').classList.remove('show');
+  localStorage.setItem('vj_order_seen', '1');
+}
+function goToEx(i) {
+  if (!activeSession || i >= activeSession.exIdx) return;
+  activeSession.exIdx = i;
+  renderActiveEx();
 }
 
 function renderActiveEx() {
@@ -868,12 +917,29 @@ function renderActiveEx() {
         </div>`).join('')
     : '<div class="prev-empty">No previous session data</div>';
 
-  document.getElementById('session-active').innerHTML = `
+  const html = `
     <div class="session-status">
       <div class="session-status-left">${m.label}</div>
-      <div class="session-status-right">Exercise ${idx+1} / ${total}</div>
+      <button class="order-info-btn" onclick="showOrderOverlay()">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4M12 8h.01"/></svg>
+        Why this order?
+      </button>
     </div>
-    <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    <div class="ex-strip" id="ex-strip">
+      ${s.exercises.map((e, i) => {
+        const name = getExName(e);
+        const words = name.split(' ');
+        const abbr = words.slice(0, 2).join(' ');
+        const short = abbr.length > 13 ? abbr.slice(0, 12) + '…' : abbr;
+        if (i < idx) {
+          return `<div class="ex-pill done" onclick="goToEx(${i})"><svg class="ex-pill-check" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>${short}</div>`;
+        } else if (i === idx) {
+          return `<div class="ex-pill current">${short}</div>`;
+        } else {
+          return `<div class="ex-pill upcoming">${short}</div>`;
+        }
+      }).join('')}
+    </div>
     <div class="prev-summary">
       <div class="prev-summary-header" onclick="togglePrevSummary()">
         <div class="prev-summary-title">Last Time</div>
@@ -921,6 +987,10 @@ function renderActiveEx() {
       <button class="btn btn-danger" style="margin-top:8px;width:100%" onclick="endSession()">Quit Session</button>
     </div>
   `;
+  document.getElementById('session-active').innerHTML = html;
+  // Scroll current pill into view
+  const currentPill = document.querySelector('.ex-pill.current');
+  if (currentPill) currentPill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 
 function updateSetData(setIdx, field, val) {
