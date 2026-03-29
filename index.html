@@ -1026,18 +1026,38 @@ function completeSet(setIdx, restSeconds) {
   if (restSeconds > 0) startTimer(restSeconds, ex.name);
 }
 
+function captureCurrentInputs() {
+  if (!activeSession) return;
+  const idx = activeSession.exIdx;
+  const sd = activeSession.setData[idx];
+  if (!sd) return;
+  let i = 0;
+  while (true) {
+    const wEl = document.getElementById('set-weight-' + i);
+    const rEl = document.getElementById('set-reps-' + i);
+    if (!wEl && !rEl) break;
+    if (!sd.doneSets[i]) sd.doneSets[i] = {};
+    if (wEl && wEl.value) sd.doneSets[i].weight = wEl.value;
+    if (rEl && rEl.value) sd.doneSets[i].reps = rEl.value;
+    i++;
+  }
+}
+
 function nextEx() {
   if (!activeSession) return;
+  captureCurrentInputs();
   const total = PROGRAM[activeSession.mIdx].sessions[activeSession.sIdx].exercises.length;
   if (activeSession.exIdx < total - 1) { activeSession.exIdx++; renderActiveEx(); }
 }
 
 function prevEx() {
   if (!activeSession) return;
+  captureCurrentInputs();
   if (activeSession.exIdx > 0) { activeSession.exIdx--; renderActiveEx(); }
 }
 
 function finishSession() {
+  captureCurrentInputs();
   if (activeSession) logSessionDone(activeSession.mIdx, activeSession.sIdx);
   document.getElementById('session-active').style.display = 'none';
   document.getElementById('session-complete').classList.add('show');
@@ -1209,7 +1229,7 @@ function logSessionDone(mIdx, sIdx) {
       const exName = getExName(ex);
       const exType = EX_INPUT_TYPE[ex.id] || 'weighted';
       const sets = sd.doneSets
-        .map((s, si) => s && s.done && (s.weight || s.reps) ? { n: si + 1, w: s.weight || '', r: s.reps || '' } : null)
+        .map((s, si) => s && (s.weight || s.reps) ? { n: si + 1, w: s.weight || '', r: s.reps || '' } : null)
         .filter(Boolean);
       if (exType === 'reps_notes') {
         if (!sets.length && !sd.feel) return null;
